@@ -61,7 +61,7 @@ class GUI(object):
     def __init__(self, dname = None):
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
-        self.window.connect("delete_event", gtk.main_quit)
+        self.window.connect("delete_event", self.on_destroy)
 
 # player
 
@@ -196,7 +196,7 @@ class GUI(object):
                 a.plot(range(len(data)),data)
                 a.axis('off')
 
-                f.savefig("/home/px/tmp/f.png",
+                f.savefig(os.environ['HOME'] + '/.f.png',
                           edgecolor='r',
                           facecolor='w',
                           orientation='portrait',
@@ -207,7 +207,7 @@ class GUI(object):
                           pad_inches=0.1,
                           frameon=True
                 )
-                self.pimage.set_from_file("/home/px/tmp/f.png")
+                self.pimage.set_from_file(os.environ['HOME'] + '/.f.png')
 
         else:
             self.play_button.set_image(self.PLAY_IMAGE)
@@ -221,7 +221,7 @@ class GUI(object):
             self.dirname = os.path.expanduser('~')
         else:
             self.dirname = os.path.abspath(dname)
-        # self.window.set_title(self.dirname)
+        self.window.set_title(self.dirname)
         files = [f for f in os.listdir(self.dirname) if f[0] != '.']
         files.sort()
         files = ['..'] + files
@@ -274,10 +274,12 @@ class GUI(object):
         self.playbin.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, 0)
         self.slider.set_value(0)
 
-    def on_destroy(self, window):
+    def on_destroy(self, *args):
         # NULL state allows the pipeline to release resources
         self.playbin.set_state(gst.STATE_NULL)
         self.is_playing = False
+        # os.environ['HOME']
+        os.remove(os.environ['HOME'] + '/.f.png')
         gtk.main_quit()
 
     def on_slider_change(self, slider):
