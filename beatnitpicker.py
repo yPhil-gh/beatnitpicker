@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# plop
+
 import os, stat, time
 import gst, gtk, gobject
 
