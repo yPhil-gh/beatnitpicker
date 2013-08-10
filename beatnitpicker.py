@@ -183,7 +183,6 @@ class GUI(object):
 
     def the_method(self, button, filename):
         print filename
-        # print vars(self)
         print self.playbin.get_property('uri')
         print self.playbin.get_state()
         print "------------------------"
@@ -197,7 +196,6 @@ class GUI(object):
             gobject.timeout_add(100, self.update_slider)
             if filename.endswith(".wav"):
                 # Plotting
-                # if filename.endswith(".wav"):
                 rate, data = wavfile.read(open(filename, 'r'))
                 f = Figure(figsize=(4.5,0.5), linewidth=0.0, edgecolor='b', facecolor='r', dpi=100)
                 self.drawing_area = FigureCanvas(f)
@@ -217,8 +215,6 @@ class GUI(object):
                           frameon=True
                 )
                 self.pimage.set_from_file("/home/px/tmp/f.png")
-
-                # self.pbox.pack_start(self.drawing_area)
                 print "plotted!"
         else:
             self.play_button.set_image(self.PLAY_IMAGE)
