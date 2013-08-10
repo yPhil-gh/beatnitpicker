@@ -58,36 +58,6 @@ class GUI(object):
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
         self.window.connect("delete_event", self.on_destroy)
-
-# player
-
-        self.play_button = gtk.Button()
-        self.slider = gtk.HScale()
-
-        self.buttons_hbox = gtk.HBox()
-        self.slider_hbox = gtk.HBox()
-
-        self.buttons_hbox.pack_start(self.play_button, False)
-        self.slider_hbox.pack_start(self.slider, True, True)
-
-        self.play_button.set_image(self.PLAY_IMAGE)
-        self.play_button.connect('clicked', self.the_method, "/home/px/scripts/beatnitpycker/preview.mp3")
-
-        self.slider.set_range(0, 100)
-        self.slider.set_increments(1, 10)
-        self.slider.connect('value-changed', self.on_slider_change)
-
-        self.playbin = gst.element_factory_make('playbin2')
-        self.playbin.set_property('uri', 'file:////home/px/scripts/beatnitpycker/preview.mp3')
-
-        self.bus = self.playbin.get_bus()
-        self.bus.add_signal_watch()
-
-        self.bus.connect("message::eos", self.on_finish)
-
-        self.is_playing = False
-
-# end player
 # lister
 
         cell_data_funcs = (None, self.file_size, self.file_mode,
@@ -112,6 +82,39 @@ class GUI(object):
         self.treeview.set_model(listmodel)
 
 # end lister
+
+# player
+
+        self.play_button = gtk.Button()
+        self.slider = gtk.HScale()
+
+        self.buttons_hbox = gtk.HBox()
+        self.slider_hbox = gtk.HBox()
+
+        self.buttons_hbox.pack_start(self.play_button, False)
+        self.slider_hbox.pack_start(self.slider, True, True)
+
+        self.selection = self.treeview.get_selection()
+        self.model, self.selected = self.selection.get_selected_rows()
+
+        self.play_button.set_image(self.PLAY_IMAGE)
+        # self.play_button.connect('clicked', self.the_method, "/home/px/scripts/beatnitpycker/preview.mp3")
+
+        self.slider.set_range(0, 100)
+        self.slider.set_increments(1, 10)
+        self.slider.connect('value-changed', self.on_slider_change)
+
+        self.playbin = gst.element_factory_make('playbin2')
+        # self.playbin.set_property('uri', 'file:////home/px/scripts/beatnitpycker/preview.mp3')
+
+        self.bus = self.playbin.get_bus()
+        self.bus.add_signal_watch()
+
+        self.bus.connect("message::eos", self.on_finish)
+
+        self.is_playing = False
+
+# end player
 
         vbox = gtk.VBox()
 
