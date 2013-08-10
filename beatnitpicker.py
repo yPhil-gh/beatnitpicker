@@ -67,6 +67,7 @@ class GUI(object):
         self.tvcolumn = [None] * len(self.column_names)
         cellpb = gtk.CellRendererPixbuf()
         self.tvcolumn[0] = gtk.TreeViewColumn(self.column_names[0], cellpb)
+        self.tvcolumn[0].set_sort_column_id(0)
         self.tvcolumn[0].set_cell_data_func(cellpb, self.file_pixbuf)
         cell = gtk.CellRendererText()
         self.tvcolumn[0].pack_start(cell, False)
@@ -80,6 +81,8 @@ class GUI(object):
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
             self.treeview.append_column(self.tvcolumn[n])
         self.treeview.set_model(listmodel)
+
+        listmodel.set_sort_func(0, self.lister_compare, None)
 
         # end lister
 
@@ -215,6 +218,17 @@ class GUI(object):
 
     # Lister funcs
 
+    def lister_compare(self, model, row1, row2, user_data):
+        sort_column, _ = model.get_sort_column_id()
+        value1 = model.get_value(row1, sort_column)
+        value2 = model.get_value(row2, sort_column)
+        if value1 < value2:
+            return -1
+        elif value1 == value2:
+            return 0
+        else:
+            return 1
+
     def make_list(self, dname=None):
         if not dname:
             self.dirname = os.path.expanduser('~')
@@ -279,7 +293,12 @@ class GUI(object):
         self.playbin.set_state(gst.STATE_NULL)
         self.is_playing = False
         # os.environ['HOME']
-        os.remove(os.environ['HOME'] + '/.f.png')
+        try:
+            with open(os.environ['HOME'] + '/.f.png'):
+                os.remove(os.environ['HOME'] + '/.f.png')
+        except IOError:
+            pass
+
         gtk.main_quit()
 
     def on_slider_change(self, slider):
