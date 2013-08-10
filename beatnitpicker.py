@@ -61,7 +61,7 @@ class GUI(object):
         estimated_bitrate = file_size/length_secs/1000*8
 
     def open_file(self, treeview, path, button, *args):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac" ]
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
         model = treeview.get_model()
         iter = model.get_iter(path)
         filename = os.path.join(self.dirname, model.get_value(iter, 0))
@@ -240,14 +240,25 @@ class GUI(object):
             self.is_playing = True
             self.playbin.set_state(gst.STATE_PLAYING)
             gobject.timeout_add(100, self.update_slider)
-            if filename.endswith(".wav"):
+            if filename.endswith(".wav") or filename.endswith(".WAV") :
+                # Plotting
                 rate, data = wavfile.read(open(filename, 'r'))
-                f = Figure(figsize=(4.5,0.5), linewidth=2, edgecolor='k', facecolor='k', dpi=72)
+                f = Figure(figsize=(4.5,0.5))
                 self.drawing_area = FigureCanvas(f)
                 a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
-                a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.2, linestyle="-")
+                a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
                 a.axis('off')
-                f.savefig(os.environ['HOME'] + '/.f.png')
+                f.savefig(
+                    os.environ['HOME'] + '/.f.png',
+                    height = 10,
+                    width = 10,
+                    type = 'jpg',
+                    pointsize = 10,
+                    family = "Helvetica",
+                    sublines = 0,
+                    toplines = 0,
+                    leftlines = 0
+                )
                 self.pimage.set_from_file(os.environ['HOME'] + '/.f.png')
 
         else:
@@ -283,7 +294,7 @@ class GUI(object):
         return listmodel
 
     def file_pixbuf(self, column, cell, model, iter):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac" ]
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
         filename = os.path.join(self.dirname, model.get_value(iter, 0))
         filestat = os.stat(filename)
         if stat.S_ISDIR(filestat.st_mode):
