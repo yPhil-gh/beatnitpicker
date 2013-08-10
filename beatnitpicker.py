@@ -68,11 +68,11 @@ class GUI(object):
         self.tvcolumn = [None] * len(self.column_names)
         cellpb = gtk.CellRendererPixbuf()
         self.tvcolumn[0] = gtk.TreeViewColumn(self.column_names[0], cellpb)
-        self.tvcolumn[0].set_sort_column_id(0)
         self.tvcolumn[0].set_cell_data_func(cellpb, self.file_pixbuf)
         cell = gtk.CellRendererText()
         self.tvcolumn[0].pack_start(cell, False)
         self.tvcolumn[0].set_cell_data_func(cell, self.file_name)
+        self.tvcolumn[0].set_sort_column_id(0)
         self.treeview.append_column(self.tvcolumn[0])
         for n in range(1, len(self.column_names)):
             cell = gtk.CellRendererText()
@@ -80,12 +80,11 @@ class GUI(object):
             if n == 1:
                 cell.set_property('xalign', 1.0)
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
+            self.tvcolumn[n].set_sort_column_id(0)
             self.treeview.append_column(self.tvcolumn[n])
         self.treeview.set_model(listmodel)
 
         listmodel.set_sort_func(0, self.lister_compare, None)
-
-        # end lister
 
         # player
 
