@@ -60,12 +60,30 @@ class GUI(object):
         file_size = int(meta.getheaders('Content-Length')[0])
         estimated_bitrate = file_size/length_secs/1000*8
 
+    def the_other_wrapper(self, treeview, path, button, *args):
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac" ]
+        model = treeview.get_model()
+        iter = model.get_iter(path)
+        filename = os.path.join(self.dirname, model.get_value(iter, 0))
+        filestat = os.stat(filename)
+        if stat.S_ISDIR(filestat.st_mode):
+            new_model = self.make_list(filename)
+            treeview.set_model(new_model)
+        elif filename.endswith(tuple(audioFormats)):
+            self.the_method(self, filename)
+        else:
+            print "# Not an audio file"
+
     def onSelectionChanged(self, tree_selection) :
         (model, pathlist) = tree_selection.get_selected_rows()
         for path in pathlist :
             tree_iter = model.get_iter(path)
             value = model.get_value(tree_iter,0)
             print value
+
+    def get_file_name(self, column, cell, model, iter):
+        cell.set_property('text', model.get_value(iter, 0))
+        return
 
     def __init__(self, dname = None):
         self.window = gtk.Window()
@@ -184,21 +202,8 @@ class GUI(object):
 
         self.window.add(vbox)
         self.window.show_all()
+        self.treeview.grab_focus()
         return
-
-    def the_other_wrapper(self, treeview, path, button, *args):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac" ]
-        model = treeview.get_model()
-        iter = model.get_iter(path)
-        filename = os.path.join(self.dirname, model.get_value(iter, 0))
-        filestat = os.stat(filename)
-        if stat.S_ISDIR(filestat.st_mode):
-            new_model = self.make_list(filename)
-            treeview.set_model(new_model)
-        elif filename.endswith(tuple(audioFormats)):
-            self.the_method(self, filename)
-        else:
-            print "# Not an audio file"
 
 
     def the_method(self, button, filename):
