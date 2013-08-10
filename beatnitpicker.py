@@ -26,6 +26,7 @@ interface = """
 </ui>
 """
 
+
 class GUI(object):
 
     PLAY_IMAGE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON)
