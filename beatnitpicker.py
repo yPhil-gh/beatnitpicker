@@ -81,9 +81,9 @@ class GUI(object):
             self.treeview.append_column(self.tvcolumn[n])
         self.treeview.set_model(listmodel)
 
-# end lister
+        # end lister
 
-# player
+        # player
 
         self.play_button = gtk.Button()
         self.slider = gtk.HScale()
@@ -114,22 +114,23 @@ class GUI(object):
 
         self.is_playing = False
 
-# end player
+        # end player
 
         vbox = gtk.VBox()
-
 
         # Plot image
 
         self.plot_hbox = gtk.HBox()
         self.pimage = gtk.Image()
+        scroll_list = gtk.ScrolledWindow()
 
+        scroll_list.add(self.treeview)
 
         self.plot_hbox.pack_start(self.pimage, True, True, 1)
         vbox.pack_start(self.plot_hbox, False, False, 1)
         vbox.pack_start(self.slider_hbox, False, False, 1)
         vbox.pack_start(self.buttons_hbox, False, False, 1)
-        vbox.pack_start(self.treeview, False, False, 1)
+        vbox.pack_start(scroll_list, True, True, 1)
 
         self.treeview.connect('row-activated', self.the_other_wrapper, "plop")
 
