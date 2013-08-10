@@ -60,7 +60,7 @@ class GUI(object):
         file_size = int(meta.getheaders('Content-Length')[0])
         estimated_bitrate = file_size/length_secs/1000*8
 
-    def the_other_wrapper(self, treeview, path, button, *args):
+    def open_file(self, treeview, path, button, *args):
         audioFormats = [ ".wav", ".mp3", ".ogg", ".flac" ]
         model = treeview.get_model()
         iter = model.get_iter(path)
@@ -80,16 +80,42 @@ class GUI(object):
         for path in pathlist :
             tree_iter = model.get_iter(path)
             value = model.get_value(tree_iter,0)
+            # value =  tree_iter.set_property('text', model.get_value(iter, 0))
             print value
 
-    def get_file_name(self, column, cell, model, iter):
-        cell.set_property('text', model.get_value(iter, 0))
-        return
+    def get_file_name(self, treeview, *args):
+        # path, focus_column = treeview.get_cursor()
+        # sel = treeview.get_selection()
+        # (model, pathlist) = sel.get_selected_rows()
+        # value = sel.select_path(path)
+        # print value
+        print "plop"
+
+        # for path in pathlist :
+            # sel = treeview.get_selection()
+            # value = sel.select_path(path)
+            # print value
+            # tree_iter = model.get_iter(path)
+            # value = model.get_value(tree_iter,0)
+            # value =  tree_iter.set_property('text', model.get_value(iter, 0))
+            # print value
+
+
+        # (model, pathlist) = tree_selection.get_selected_rows()
+        # model = treeview.get_model()
+        # iter = model.get_iter(path)
+        # filename = os.path.join(self.dirname, model.get_value(iter, 0))
+        # filestat = os.stat(filename)
+        # if stat.S_ISDIR(filestat.st_mode):
+            # print "# Not a file"
+        # else:
+            # print filename
 
     def __init__(self, dname = None):
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
         self.window.connect("delete_event", self.on_destroy)
+        self.window.set_icon(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
 
         self.mydname = dname
 
@@ -122,11 +148,10 @@ class GUI(object):
 
         tree_selection = self.treeview.get_selection()
         tree_selection.set_mode(gtk.SELECTION_MULTIPLE)
-        tree_selection.connect('changed', self.onSelectionChanged)
-
+        tree_selection.connect('changed', self.get_file_name)
 
         self.listmodel.set_sort_func(0, self.lister_compare, None)
-        self.treeview.connect('row-activated', self.the_other_wrapper)
+        self.treeview.connect('row-activated', self.open_file)
 
         # player
 
