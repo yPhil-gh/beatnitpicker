@@ -7,8 +7,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
 import scipy.io.wavfile as wavfile
 
-
-
 interface = """
 <ui>
     <menubar name="MenuBar">
@@ -182,13 +180,8 @@ class GUI(object):
 
 
     def the_method(self, button, filename):
-        print filename
-        print self.playbin.get_property('uri')
-        print self.playbin.get_state()
-        print "------------------------"
         if not self.is_playing:
             self.playbin.set_state(gst.STATE_READY)
-            print self.playbin.get_state()
             self.playbin.set_property('uri', 'file:///' + filename)
             self.play_button.set_image(self.PAUSE_IMAGE)
             self.is_playing = True
@@ -215,7 +208,7 @@ class GUI(object):
                           frameon=True
                 )
                 self.pimage.set_from_file("/home/px/tmp/f.png")
-                print "plotted!"
+
         else:
             self.play_button.set_image(self.PLAY_IMAGE)
             self.is_playing = False
