@@ -58,7 +58,8 @@ class GUI(object):
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
         self.window.connect("delete_event", self.on_destroy)
-# lister
+
+    # lister
 
         cell_data_funcs = (None, self.file_size, self.file_mode,
                            self.file_last_changed)
