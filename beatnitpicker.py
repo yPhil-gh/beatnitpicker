@@ -54,6 +54,20 @@ class GUI(object):
         about.run()
         about.destroy()
 
+    def audiofile_info(self, filename):
+        # u = urllib2.urlopen(url)
+        meta = filename.info()
+        file_size = int(meta.getheaders('Content-Length')[0])
+        estimated_bitrate = file_size/length_secs/1000*8
+
+    def onSelectionChanged(self, tree_selection) :
+        (model, pathlist) = tree_selection.get_selected_rows()
+        for path in pathlist :
+            tree_iter = model.get_iter(path)
+            value = model.get_value(tree_iter,0)
+            print value
+
+
     def __init__(self, dname = None):
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
@@ -64,6 +78,8 @@ class GUI(object):
         cell_data_funcs = (None, self.file_size, self.file_mode,
                            self.file_last_changed)
         listmodel = self.make_list(dname)
+
+
         self.treeview = gtk.TreeView()
         self.tvcolumn = [None] * len(self.column_names)
         cellpb = gtk.CellRendererPixbuf()
@@ -83,6 +99,11 @@ class GUI(object):
             self.tvcolumn[n].set_sort_column_id(0)
             self.treeview.append_column(self.tvcolumn[n])
         self.treeview.set_model(listmodel)
+
+        tree_selection = self.treeview.get_selection()
+        tree_selection.set_mode(gtk.SELECTION_MULTIPLE)
+        tree_selection.connect("changed", self.onSelectionChanged)
+
 
         listmodel.set_sort_func(0, self.lister_compare, None)
 
