@@ -67,11 +67,12 @@ class GUI(object):
             value = model.get_value(tree_iter,0)
             print value
 
-
     def __init__(self, dname = None):
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
         self.window.connect("delete_event", self.on_destroy)
+
+        self.mydname = dname
 
     # lister
 
@@ -106,6 +107,7 @@ class GUI(object):
 
 
         listmodel.set_sort_func(0, self.lister_compare, None)
+        self.treeview.connect('row-activated', self.the_other_wrapper)
 
         # player
 
@@ -155,9 +157,6 @@ class GUI(object):
         vbox.pack_start(self.slider_hbox, False, False, 1)
         vbox.pack_start(self.buttons_hbox, False, False, 1)
         vbox.pack_start(scroll_list, True, True, 1)
-
-        self.treeview.connect('row-activated', self.the_other_wrapper, "plop")
-
 
         uimanager = gtk.UIManager()
         accelgroup = uimanager.get_accel_group()
