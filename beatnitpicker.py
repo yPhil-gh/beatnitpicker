@@ -249,7 +249,7 @@ class GUI(object):
                 a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
                 a.axis('off')
                 f.savefig(
-                    os.environ['HOME'] + '/.f.png',
+                    os.path.expanduser('~') + '/.f.png',
                     height = 10,
                     width = 10,
                     type = 'jpg',
@@ -259,7 +259,7 @@ class GUI(object):
                     toplines = 0,
                     leftlines = 0
                 )
-                self.pimage.set_from_file(os.environ['HOME'] + '/.f.png')
+                self.pimage.set_from_file(os.path.expanduser('~') + '/.f.png')
 
         else:
             self.play_button.set_image(self.PLAY_IMAGE)
@@ -284,7 +284,7 @@ class GUI(object):
             self.dirname = os.path.expanduser('~')
         else:
             self.dirname = os.path.abspath(dname)
-        self.window.set_title(self.dirname)
+        self.window.set_title("BeatNTPK : " + self.dirname)
         files = [f for f in os.listdir(self.dirname) if f[0] != '.']
         files.sort()
         files = ['..'] + files
@@ -344,8 +344,8 @@ class GUI(object):
         self.is_playing = False
         # os.environ['HOME']
         try:
-            with open(os.environ['HOME'] + '/.f.png'):
-                os.remove(os.environ['HOME'] + '/.f.png')
+            with open(os.path.expanduser('~') + '/.f.png'):
+                os.remove(os.path.expanduser('~') + '/.f.png')
         except IOError:
             pass
 
