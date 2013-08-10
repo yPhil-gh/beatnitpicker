@@ -241,25 +241,13 @@ class GUI(object):
             self.playbin.set_state(gst.STATE_PLAYING)
             gobject.timeout_add(100, self.update_slider)
             if filename.endswith(".wav"):
-                # Plotting
                 rate, data = wavfile.read(open(filename, 'r'))
-                f = Figure(figsize=(4.5,0.5), linewidth=0.0, edgecolor='b', facecolor='r', dpi=100)
+                f = Figure(figsize=(4.5,0.5), linewidth=2, edgecolor='k', facecolor='k', dpi=72)
                 self.drawing_area = FigureCanvas(f)
-                a = f.add_subplot(111)
-                a.plot(range(len(data)),data)
+                a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
+                a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.2, linestyle="-")
                 a.axis('off')
-
-                f.savefig(os.environ['HOME'] + '/.f.png',
-                          edgecolor='r',
-                          facecolor='w',
-                          orientation='portrait',
-                          papertype=None,
-                          format=None,
-                          transparent=False,
-                          bbox_inches='tight',
-                          pad_inches=0.1,
-                          frameon=True
-                )
+                f.savefig(os.environ['HOME'] + '/.f.png')
                 self.pimage.set_from_file(os.environ['HOME'] + '/.f.png')
 
         else:
