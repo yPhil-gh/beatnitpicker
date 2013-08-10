@@ -31,10 +31,6 @@ class GUI(object):
     PLAY_IMAGE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON)
     PAUSE_IMAGE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_BUTTON)
 
-    OPEN_IMAGE = gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_BUTTON)
-    CLOSED_IMAGE = gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_BUTTON)
-    toggled = True
-
     column_names = ['Name', 'Size', 'Mode', 'Last Changed']
 
     def about_box(self, widget):
@@ -68,9 +64,11 @@ class GUI(object):
         self.play_button = gtk.Button()
         self.slider = gtk.HScale()
 
-        self.player_hbox = gtk.HBox()
-        self.player_hbox.pack_start(self.play_button, False)
-        self.player_hbox.pack_start(self.slider, True, True)
+        self.buttons_hbox = gtk.HBox()
+        self.slider_hbox = gtk.HBox()
+
+        self.buttons_hbox.pack_start(self.play_button, False)
+        self.slider_hbox.pack_start(self.slider, True, True)
 
         self.play_button.set_image(self.PLAY_IMAGE)
         self.play_button.connect('clicked', self.the_method, "/home/px/scripts/beatnitpycker/preview.mp3")
@@ -123,17 +121,14 @@ class GUI(object):
         self.plot_hbox = gtk.HBox()
         self.pimage = gtk.Image()
 
-        self.button = gtk.Button() # THIS is the button to modify
-        self.button.set_image(self.OPEN_IMAGE)
 
         self.plot_hbox.pack_start(self.pimage, True, True, 1)
         vbox.pack_start(self.plot_hbox, False, False, 1)
-        vbox.pack_start(self.player_hbox, False, False, 1)
-        vbox.pack_start(self.button, False, False, 1)
+        vbox.pack_start(self.slider_hbox, False, False, 1)
+        vbox.pack_start(self.buttons_hbox, False, False, 1)
         vbox.pack_start(self.treeview, False, False, 1)
 
         self.treeview.connect('row-activated', self.the_other_wrapper, "plop")
-        self.button.connect('clicked', self.the_method, "plop")
 
 
         uimanager = gtk.UIManager()
@@ -214,7 +209,7 @@ class GUI(object):
             self.is_playing = False
             self.playbin.set_state(gst.STATE_PAUSED)
 
-# Lister funcs
+    # Lister funcs
 
     def make_list(self, dname=None):
         if not dname:
@@ -265,7 +260,8 @@ class GUI(object):
         cell.set_property('text', time.ctime(filestat.st_mtime))
         return
 
-# player funcs
+
+    # player funcs
 
     def on_finish(self, bus, message):
         self.playbin.set_state(gst.STATE_PAUSED)
