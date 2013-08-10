@@ -180,6 +180,7 @@ class GUI(object):
         else:
             print "# Not an audio file"
 
+
     def the_method(self, button, filename):
         print filename
         # print vars(self)
