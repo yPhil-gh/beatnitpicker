@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
-import os, stat, time
+import os, sys, stat, time
 import gst, gtk, gobject
+gobject.threads_init()
+
+from gst.extend import discoverer
+import gst.pbutils
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
@@ -14,6 +18,7 @@ interface = """
             <menuitem action="New"/>
             <menuitem action="Open"/>
             <menuitem action="Save"/>
+            <menuitem action="Properties"/>
             <menuitem action="Quit"/>
         </menu>
         <menu action="Edit">
@@ -30,6 +35,28 @@ interface = """
 class GUI(object):
 
     column_names = ['Name', 'Size', 'Mode', 'Last Changed']
+
+    def get_info(self, argv):
+
+        f = "/home/px/.kituu/scripts/beatnitpycker/Azer0-400-01-Flying_Dutchman.ogg"
+
+        newitem = gst.pbutils.Discoverer(50000000000)
+        info = newitem.discover_uri("file://" + f)
+        tags = info.get_tags()
+        mystring = ""
+        for tag_name in tags.keys():
+            mystring += tag_name + " : " + str(tags[tag_name]) + '\r\n'
+        return mystring
+
+
+    def file_properties_dialog(self, widget):
+        afile = "/home/px/gare_du_nord-catchlak.wav"
+        info = self.get_info(afile)
+        message = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, info)
+        message.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_CLOSE)
+        resp = message.run()
+        if resp == gtk.RESPONSE_CLOSE:
+            message.destroy()
 
     def about_box(self, widget):
         about = gtk.AboutDialog()
@@ -120,6 +147,8 @@ class GUI(object):
 
         self.toggle_button = gtk.Button()
         self.toggle_button = gtk.ToggleButton(None)
+        self.test_button = gtk.Button("plop")
+
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
 
         self.buttons_hbox = gtk.HBox()
@@ -127,6 +156,7 @@ class GUI(object):
         self.slider.set_range(0, 100)
         self.slider.set_increments(1, 10)
 
+        self.buttons_hbox.pack_start(self.test_button, False)
         self.buttons_hbox.pack_start(self.toggle_button, False)
         self.slider_hbox.pack_start(self.slider, True, True)
 
@@ -143,6 +173,7 @@ class GUI(object):
         self.toggle_button.connect("toggled", self.toggle_play, False)
         self.slider.connect('value-changed', self.on_slider_change)
         self.treeview.connect('row-activated', self.open_file)
+        self.test_button.connect('clicked', self.file_properties_dialog)
         # tree_selection.connect('changed', self.get_file_name)
 
         vbox = gtk.VBox()
@@ -164,6 +195,7 @@ class GUI(object):
             ("New", gtk.STOCK_NEW, "_New", None, "Create a New Document"),
             ("Open", gtk.STOCK_OPEN, "_Open", None, "Open an Existing Document"),
             ("Save", gtk.STOCK_SAVE, "_Save", None, "Save the Current Document"),
+            ("Properties", gtk.STOCK_PROPERTIES, "_Properties", None, "File info", self.file_properties_dialog),
             ("Quit", gtk.STOCK_QUIT, "_Quit", None, "Quit the Application", lambda w: gtk.main_quit()),
             ("File", None, "_File"),
             ("Preferences", gtk.STOCK_PREFERENCES, "_Preferences", None, "Edit the Preferences"),
@@ -375,7 +407,7 @@ class GUI(object):
 
         except gst.QueryError:
             # pipeline must not be ready and does not know position
-         pass
+            pass
 
         return True # continue calling every 30 milliseconds
 
