@@ -29,9 +29,6 @@ interface = """
 
 class GUI(object):
 
-    PLAY_IMAGE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON)
-    PAUSE_IMAGE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_BUTTON)
-
     column_names = ['Name', 'Size', 'Mode', 'Last Changed']
 
     def about_box(self, widget):
@@ -111,8 +108,12 @@ class GUI(object):
             # print "# Not a file"
         # else:
             # print filename
+    PLAY_IMAGE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON)
+    PAUSE_IMAGE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_BUTTON)
 
     def __init__(self, dname = None):
+
+
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
         self.window.connect("delete_event", self.on_destroy)
@@ -159,17 +160,25 @@ class GUI(object):
         self.play_button = gtk.Button()
         self.slider = gtk.HScale()
 
+        self.test_button = gtk.Button()
+        self.test_button = gtk.ToggleButton(None)
+        self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+
         self.buttons_hbox = gtk.HBox()
         self.slider_hbox = gtk.HBox()
 
         self.buttons_hbox.pack_start(self.play_button, False)
+        self.buttons_hbox.pack_start(self.test_button, False)
         self.slider_hbox.pack_start(self.slider, True, True)
 
         self.selection = self.treeview.get_selection()
         self.model, self.selected = self.selection.get_selected_rows()
 
         self.play_button.set_image(self.PLAY_IMAGE)
+        # self.test_button.set_image(self.PLAY_IMAGE)
         # self.play_button.connect('clicked', self.the_method, "/home/px/scripts/beatnitpycker/preview.mp3")
+        # self.test_button.connect('clicked', self.get_selected_tree_row)
+        self.test_button.connect("toggled", self.get_selected_tree_row, True)
 
         self.slider.set_range(0, 100)
         self.slider.set_increments(1, 10)
@@ -232,12 +241,39 @@ class GUI(object):
         self.treeview.grab_focus()
         return
 
+    def get_selected_tree_row(self, widget, button):
+        # print "ToggleButton", button, "was turned %s" % ("off", "on")[widget.get_active()]
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
+        if widget.get_active():
+            print "Playing"
+            treeview = self.treeview
+            selection = treeview.get_selection()
+            (model, pathlist) = selection.get_selected_rows()
+            slider_position =  self.slider.get_value()
+            for path in pathlist :
+                iter = model.get_iter(path)
+                filename = os.path.join(self.dirname, model.get_value(iter, 0))
+                filestat = os.stat(filename)
+                if stat.S_ISDIR(filestat.st_mode):
+                    print "Directory :", filename
+                elif filename.endswith(tuple(audioFormats)):
+                    if not slider_position > 0.0:
+                        self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+                        print filename, "Playing, slider is at", slider_position
+                        self.the_method(self, filename)
+                    else:
+                        print filename, "slider is at", slider_position
+                else:
+                    print filename, "slider is at", slider_position
+        else:
+            self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+            print "Paused"
 
     def the_method(self, button, filename):
         if not self.is_playing:
             self.playbin.set_state(gst.STATE_READY)
             self.playbin.set_property('uri', 'file:///' + filename)
-            self.play_button.set_image(self.PAUSE_IMAGE)
+            # self.play_button.set_image(gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
             self.is_playing = True
             self.playbin.set_state(gst.STATE_PLAYING)
             gobject.timeout_add(100, self.update_slider)
@@ -263,7 +299,6 @@ class GUI(object):
                 self.pimage.set_from_file(os.path.expanduser('~') + '/.f.png')
 
         else:
-            self.play_button.set_image(self.PLAY_IMAGE)
             self.is_playing = False
             self.playbin.set_state(gst.STATE_PAUSED)
 
@@ -338,6 +373,7 @@ class GUI(object):
         self.is_playing = False
         self.playbin.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, 0)
         self.slider.set_value(0)
+        self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
 
     def on_destroy(self, *args):
         # NULL state allows the pipeline to release resources
