@@ -226,6 +226,7 @@ class GUI(object):
         self.treeview.grab_focus()
         return
 
+
     def get_selected_tree_row(self, *args):
         # print "ToggleButton", button, "was turned %s" % ("off", "on")[widget.get_active()]
         audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
@@ -240,32 +241,35 @@ class GUI(object):
             if stat.S_ISDIR(filestat.st_mode):
                 print "Directory :", filename
             elif filename.endswith(tuple(audioFormats)):
-                self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
                 return filename
             else:
                 print filename, "is a dir"
 
+
     def toggle_play(self, button, filename):
         if filename:
+            self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
             self.player(self, filename)
         else:
             filename = self.get_selected_tree_row(self)
             slider_position =  self.slider.get_value()
             if self.is_playing:
+                self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
                 self.is_playing = False
                 self.playbin.set_state(gst.STATE_PAUSED)
             else:
                 if slider_position > 0.0:
+                    self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
                     self.playbin.set_state(gst.STATE_PLAYING)
                     gobject.timeout_add(100, self.update_slider)
                     self.is_playing = True
                 else:
+                    self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
                     self.player(self, filename)
                     self.is_playing = True
 
 
     def player(self, button, filename):
-        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
         self.playbin.set_state(gst.STATE_READY)
         self.playbin.set_property('uri', 'file:///' + filename)
         self.is_playing = True
