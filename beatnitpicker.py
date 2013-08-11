@@ -36,12 +36,12 @@ class GUI(object):
 
     column_names = ['Name', 'Size', 'Mode', 'Last Changed']
 
-    def get_info(self, argv):
+    def get_info(self, filename):
 
         f = "/home/px/.kituu/scripts/beatnitpycker/Azer0-400-01-Flying_Dutchman.ogg"
 
         newitem = gst.pbutils.Discoverer(50000000000)
-        info = newitem.discover_uri("file://" + f)
+        info = newitem.discover_uri("file://" + filename)
         tags = info.get_tags()
         mystring = ""
         for tag_name in tags.keys():
@@ -50,13 +50,22 @@ class GUI(object):
 
 
     def file_properties_dialog(self, widget):
-        afile = "/home/px/gare_du_nord-catchlak.wav"
-        info = self.get_info(afile)
-        message = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, info)
-        message.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_CLOSE)
-        resp = message.run()
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
+        filename = self.get_selected_tree_row(self)
+        if filename.endswith(tuple(audioFormats)):
+            title = os.path.basename(filename)
+            text = self.get_info(filename)
+        else:
+            title = os.path.basename(filename)
+            text = "Not an audio file"
+
+        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
+        # dialog.format_secondary_text(info)
+        dialog.format_secondary_text("Location :" + filename + '\r' + text)
+        dialog.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_CLOSE)
+        resp = dialog.run()
         if resp == gtk.RESPONSE_CLOSE:
-            message.destroy()
+            dialog.destroy()
 
     def about_box(self, widget):
         about = gtk.AboutDialog()
@@ -250,6 +259,7 @@ class GUI(object):
         else:
             print "filename = False"
             filename = self.get_selected_tree_row(self)
+            print "filename is now", filename
             if self.is_playing:
                 print "self.is_playing = True"
                 self.is_playing = False
@@ -260,14 +270,13 @@ class GUI(object):
                 if slider_position > 0.0:
                     print "slider_position > 0.0"
                     self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
-                    self.playbin.set_state(gst.STATE_PLAYING)
+                    self.playbin.set_state(gst.STATE_PAUSED)
                     gobject.timeout_add(100, self.update_slider)
-                    self.is_playing = True
+                    self.is_playing = False
                 else:
                     print "slider_position !> 0.0"
                     self.player(self, filename)
-                    self.playbin.set_state(gst.STATE_PAUSED)
-                    self.is_playing = False
+                    self.is_playing = True
 
     def player(self, button, filename):
         print "play now"
