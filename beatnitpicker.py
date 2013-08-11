@@ -72,23 +72,8 @@ class GUI(object):
         else:
             print "# Not an audio file"
 
-    def onSelectionChanged(self, tree_selection) :
-        (model, pathlist) = tree_selection.get_selected_rows()
-
-        for path in pathlist :
-            tree_iter = model.get_iter(path)
-            value = model.get_value(tree_iter,0)
-            # value =  tree_iter.set_property('text', model.get_value(iter, 0))
-            print value
-
-    def get_file_name(self, treeview, *args):
-        print "plop"
-
-    PLAY_IMAGE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON)
-    PAUSE_IMAGE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_BUTTON)
 
     def __init__(self, dname = None):
-
 
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
@@ -129,69 +114,45 @@ class GUI(object):
 
         self.listmodel.set_sort_func(0, self.lister_compare, None)
 
-        # player
+    # player
 
-        self.play_button = gtk.Button()
         self.slider = gtk.HScale()
 
-        self.test_button = gtk.Button()
-        self.test_button = gtk.ToggleButton(None)
-        self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+        self.toggle_button = gtk.Button()
+        self.toggle_button = gtk.ToggleButton(None)
+        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
 
         self.buttons_hbox = gtk.HBox()
         self.slider_hbox = gtk.HBox()
-
-        self.buttons_hbox.pack_start(self.play_button, False)
-        self.buttons_hbox.pack_start(self.test_button, False)
-        self.slider_hbox.pack_start(self.slider, True, True)
-
-        self.selection = self.treeview.get_selection()
-        self.model, self.selected = self.selection.get_selected_rows()
-
-        self.play_button.set_image(self.PLAY_IMAGE)
-        # self.test_button.set_image(self.PLAY_IMAGE)
-        # self.play_button.connect('clicked', self.the_method, "/home/px/scripts/beatnitpycker/preview.mp3")
-        # self.test_button.connect('clicked', self.get_selected_tree_row)
-
         self.slider.set_range(0, 100)
         self.slider.set_increments(1, 10)
 
+        self.buttons_hbox.pack_start(self.toggle_button, False)
+        self.slider_hbox.pack_start(self.slider, True, True)
 
         self.playbin = gst.element_factory_make('playbin2')
-        # self.playbin.set_property('uri', 'file:////home/px/scripts/beatnitpycker/preview.mp3')
-
         self.bus = self.playbin.get_bus()
         self.bus.add_signal_watch()
-
         self.bus.connect("message::eos", self.on_finish)
 
         self.is_playing = False
 
-        # end player
+    # end player
 
-        # Connects
-        self.test_button.connect("toggled", self.toggle_play, False)
+    # Connects
+        self.toggle_button.connect("toggled", self.toggle_play, False)
         self.slider.connect('value-changed', self.on_slider_change)
         self.treeview.connect('row-activated', self.open_file)
-        tree_selection.connect('changed', self.get_file_name)
+        # tree_selection.connect('changed', self.get_file_name)
 
         vbox = gtk.VBox()
 
-        # Plot image
+    # UI
 
         self.plot_hbox = gtk.HBox()
         self.pimage = gtk.Image()
         scroll_list = gtk.ScrolledWindow()
-
         scroll_list.add(self.treeview)
-
-
-        # Packs
-        self.plot_hbox.pack_start(self.pimage, True, True, 1)
-        vbox.pack_start(self.plot_hbox, False, False, 1)
-        vbox.pack_start(self.slider_hbox, False, False, 1)
-        vbox.pack_start(self.buttons_hbox, False, False, 1)
-        vbox.pack_start(scroll_list, True, True, 1)
 
         uimanager = gtk.UIManager()
         accelgroup = uimanager.get_accel_group()
@@ -215,69 +176,19 @@ class GUI(object):
         uimanager.add_ui_from_string(interface)
 
         menubar = uimanager.get_widget("/MenuBar")
+
+    # Packs
         vbox.pack_start(menubar, False)
+        self.plot_hbox.pack_start(self.pimage, True, True, 1)
+        vbox.pack_start(self.plot_hbox, False, False, 1)
+        vbox.pack_start(self.slider_hbox, False, False, 1)
+        vbox.pack_start(self.buttons_hbox, False, False, 1)
+        vbox.pack_start(scroll_list, True, True, 1)
 
         self.window.add(vbox)
         self.window.show_all()
         self.treeview.grab_focus()
         return
-
-    def get_selected_tree_row_old(self, widget, button):
-        # print "ToggleButton", button, "was turned %s" % ("off", "on")[widget.get_active()]
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
-        if widget.get_active():
-            print "Playing"
-            treeview = self.treeview
-            selection = treeview.get_selection()
-            (model, pathlist) = selection.get_selected_rows()
-            slider_position =  self.slider.get_value()
-            for path in pathlist :
-                iter = model.get_iter(path)
-                filename = os.path.join(self.dirname, model.get_value(iter, 0))
-                filestat = os.stat(filename)
-                if stat.S_ISDIR(filestat.st_mode):
-                    print "Directory :", filename
-                elif filename.endswith(tuple(audioFormats)):
-                    if not slider_position > 0.0:
-                        self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
-                        print filename, "Playing, slider is at", slider_position
-                        self.the_method(self, filename)
-                    else:
-                        print filename, "slider is at", slider_position
-                else:
-                    print filename, "slider is at", slider_position
-        else:
-            self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
-            print "Paused"
-
-    def get_selected_tree_row(self, widget, button):
-        # print "ToggleButton", button, "was turned %s" % ("off", "on")[widget.get_active()]
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
-        if not self.is_playing:
-            treeview = self.treeview
-            selection = treeview.get_selection()
-            (model, pathlist) = selection.get_selected_rows()
-            slider_position =  self.slider.get_value()
-            for path in pathlist :
-                iter = model.get_iter(path)
-                filename = os.path.join(self.dirname, model.get_value(iter, 0))
-                filestat = os.stat(filename)
-                if stat.S_ISDIR(filestat.st_mode):
-                    print "Directory :", filename
-                elif filename.endswith(tuple(audioFormats)):
-                    if not slider_position > 0.0:
-                        self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
-                        print filename, "Playing, slider is at", slider_position
-                        self.the_method(self, filename)
-                    else:
-                        print filename, "slider is at", slider_position
-                else:
-                    print filename, "slider is at", slider_position
-        else:
-            self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
-            print "Paused"
-            self.is_playing = False
-            self.playbin.set_state(gst.STATE_PAUSED)
 
     def get_selected_tree_row(self, *args):
         # print "ToggleButton", button, "was turned %s" % ("off", "on")[widget.get_active()]
@@ -293,7 +204,7 @@ class GUI(object):
             if stat.S_ISDIR(filestat.st_mode):
                 print "Directory :", filename
             elif filename.endswith(tuple(audioFormats)):
-                self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+                self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
                 print filename, "Playing, slider is at", slider_position
                 return filename
             else:
@@ -301,35 +212,35 @@ class GUI(object):
 
     def toggle_play(self, button, filename):
         if filename:
+            print "filename = True"
             print "play now because play now"
             self.player(self, filename)
         else:
+            print "filename = False"
             filename = self.get_selected_tree_row(self)
             if self.is_playing:
+                print "self.is_playing = True"
                 self.is_playing = False
                 self.playbin.set_state(gst.STATE_PAUSED)
             else:
+                print "self.is_playing = False"
                 slider_position =  self.slider.get_value()
                 if slider_position > 0.0:
-                    print "play!"
-                    self.is_playing = True
+                    print "slider_position > 0.0"
+                    self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
                     self.playbin.set_state(gst.STATE_PLAYING)
                     gobject.timeout_add(100, self.update_slider)
+                    self.is_playing = True
                 else:
-                    self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+                    print "slider_position !> 0.0"
+                    self.player(self, filename)
                     self.playbin.set_state(gst.STATE_PAUSED)
                     self.is_playing = False
-
-            # if not self.is_playing:
-            #     self.the_method(self, filename)
-            # else:
-            #     self.playbin.set_state(gst.STATE_PAUSED)
-            # self.is_playing = False
 
     def player(self, button, filename):
         print "play now"
 
-        self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
         self.playbin.set_state(gst.STATE_READY)
         self.playbin.set_property('uri', 'file:///' + filename)
         self.is_playing = True
@@ -356,38 +267,6 @@ class GUI(object):
             )
             self.pimage.set_from_file(os.path.expanduser('~') + '/.f.png')
 
-
-    def the_method(self, button, filename):
-        if not self.is_playing:
-            self.playbin.set_state(gst.STATE_READY)
-            self.playbin.set_property('uri', 'file:///' + filename)
-            # self.play_button.set_image(gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
-            self.is_playing = True
-            self.playbin.set_state(gst.STATE_PLAYING)
-            gobject.timeout_add(100, self.update_slider)
-            if filename.endswith(".wav") or filename.endswith(".WAV") :
-                # Plotting
-                rate, data = wavfile.read(open(filename, 'r'))
-                f = Figure(figsize=(4.5,0.5))
-                self.drawing_area = FigureCanvas(f)
-                a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
-                a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
-                a.axis('off')
-                f.savefig(
-                    os.path.expanduser('~') + '/.f.png',
-                    height = 10,
-                    width = 10,
-                    type = 'jpg',
-                    pointsize = 10,
-                    family = "Helvetica",
-                    sublines = 0,
-                    toplines = 0,
-                    leftlines = 0
-                )
-                self.pimage.set_from_file(os.path.expanduser('~') + '/.f.png')
-        else:
-            self.is_playing = False
-            self.playbin.set_state(gst.STATE_PAUSED)
 
     # Lister funcs
 
@@ -456,11 +335,10 @@ class GUI(object):
 
     def on_finish(self, bus, message):
         self.playbin.set_state(gst.STATE_PAUSED)
-        self.play_button.set_image(self.PLAY_IMAGE)
         self.is_playing = False
         self.playbin.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, 0)
         self.slider.set_value(0)
-        self.test_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
 
     def on_destroy(self, *args):
         # NULL state allows the pipeline to release resources
