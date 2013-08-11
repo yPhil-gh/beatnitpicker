@@ -247,34 +247,24 @@ class GUI(object):
 
     def toggle_play(self, button, filename):
         if filename:
-            print "filename = True"
-            print "play now because play now"
             self.player(self, filename)
         else:
-            print "filename = False"
             filename = self.get_selected_tree_row(self)
-            print "filename is now", filename
+            slider_position =  self.slider.get_value()
             if self.is_playing:
-                print "self.is_playing = True"
                 self.is_playing = False
                 self.playbin.set_state(gst.STATE_PAUSED)
             else:
-                print "self.is_playing = False"
-                slider_position =  self.slider.get_value()
                 if slider_position > 0.0:
-                    print "slider_position > 0.0"
-                    self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
-                    self.playbin.set_state(gst.STATE_PAUSED)
+                    self.playbin.set_state(gst.STATE_PLAYING)
                     gobject.timeout_add(100, self.update_slider)
-                    self.is_playing = False
+                    self.is_playing = True
                 else:
-                    print "slider_position !> 0.0"
                     self.player(self, filename)
                     self.is_playing = True
 
-    def player(self, button, filename):
-        print "play now"
 
+    def player(self, button, filename):
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
         self.playbin.set_state(gst.STATE_READY)
         self.playbin.set_property('uri', 'file:///' + filename)
