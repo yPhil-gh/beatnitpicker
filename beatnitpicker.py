@@ -12,6 +12,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
 import scipy.io.wavfile as wavfile
 
+
 interface = """
 <ui>
     <menubar name="MenuBar">
@@ -247,6 +248,8 @@ class GUI(object):
 
 
     def toggle_play(self, button, filename):
+        if not self.get_selected_tree_row(self):
+            return
         if filename:
             self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
             self.player(self, filename)
@@ -275,8 +278,12 @@ class GUI(object):
         self.is_playing = True
         self.playbin.set_state(gst.STATE_PLAYING)
         gobject.timeout_add(100, self.update_slider)
-        if filename.endswith(".wav") or filename.endswith(".WAV") :
-            # Plotting
+        if filename.endswith(".wav") or filename.endswith(".WAV"):
+            self.plotter(filename, "waveform")
+        print "------------------"
+
+    def plotter(self, filename, plot_type):
+        if plot_type == "waveform":
             rate, data = wavfile.read(open(filename, 'r'))
             f = Figure(figsize=(4.5,0.5))
             self.drawing_area = FigureCanvas(f)
@@ -289,13 +296,11 @@ class GUI(object):
                 width = 10,
                 type = 'jpg',
                 pointsize = 10,
-                family = "Helvetica",
                 sublines = 0,
                 toplines = 0,
                 leftlines = 0
             )
             self.pimage.set_from_file(os.path.expanduser('~') + '/.f.png')
-        print "------------------"
 
 
     # Lister funcs
@@ -369,6 +374,7 @@ class GUI(object):
         self.playbin.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, 0)
         self.slider.set_value(0)
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+        self.toggle_button.set_active(False)
 
     def on_destroy(self, *args):
         # NULL state allows the pipeline to release resources
