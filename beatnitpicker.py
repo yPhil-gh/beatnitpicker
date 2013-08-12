@@ -12,6 +12,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
 import scipy.io.wavfile as wavfile
 
+from numpy import arange, sin, pi
+
 interface = """
 <ui>
     <menubar name="MenuBar">
@@ -37,6 +39,39 @@ class GUI(object):
 
     column_names = ['Name', 'Size', 'Mode', 'Last Changed']
 
+    # def get_info(self, filename):
+    #     newitem = gst.pbutils.Discoverer(50000000000)
+    #     info = newitem.discover_uri("file://" + filename)
+    #     tags = info.get_tags()
+    #     mystring = ""
+    #     for tag_name in tags.keys():
+    #         mystring += tag_name + " : " + str(tags[tag_name]) + '\r\n'
+    #     return mystring
+
+    # def file_properties_dialog(self, widget):
+    #     audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
+    #     filename = self.get_selected_tree_row(self)
+    #     if filename.endswith(tuple(audioFormats)):
+    #         title = os.path.basename(filename)
+    #         text = self.get_info(filename)
+    #     else:
+    #         title = os.path.basename(filename)
+    #         text = "Not an audio file"
+
+    #     plot = self.plotter_two(filename, "waveform")
+    #     # hbox.show()
+
+    #     dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
+    #     # dialog.format_secondary_text(info)
+    #     dialog.set_title("BeatNitPicker audio file info")
+    #     dialog.format_secondary_text("Location :" + filename + '\r' + text)
+    #     dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
+    #     dialog.vbox.pack_start(plot, True, True, 0)
+    #     plot.show()
+    #     resp = dialog.run()
+    #     if resp == gtk.RESPONSE_CLOSE:
+    #         dialog.destroy()
+
     def get_info(self, filename):
         newitem = gst.pbutils.Discoverer(50000000000)
         info = newitem.discover_uri("file://" + filename)
@@ -56,11 +91,29 @@ class GUI(object):
             title = os.path.basename(filename)
             text = "Not an audio file"
 
+        # plot = gtk.Image()
+        plot = self.plotter_two(filename, "waveform")
+        print vars(plot)
+        plot.show()
+        # plot.set_from_file("/home/pcoatmeur/spectrogram.png")
+
+        # label = gtk.Label("""Spectrum of frequencies in""" + os.path.basename(filename) + """.
+        # Horizontal axis represents time, Vertical axis represents frequency, and color represents amplitude""")
+
+        label = gtk.Label()
+        label.set_markup("Spectrum of frequencies in <b>" + os.path.basename(filename) +
+                         "</b>. \nHorizontal axis represents time. \nVertical axis represents frequency, and color represents amplitude.")
+
         dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
         # dialog.format_secondary_text(info)
         dialog.set_title("BeatNitPicker audio file info")
         dialog.format_secondary_text("Location :" + filename + '\r' + text)
+
         dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
+        dialog.vbox.pack_start(plot)
+        dialog.vbox.pack_start(label)
+        dialog.show_all()
+
         resp = dialog.run()
         if resp == gtk.RESPONSE_CLOSE:
             dialog.destroy()
@@ -301,6 +354,26 @@ class GUI(object):
             )
             self.pimage.set_from_file(os.path.expanduser('~') + '/.f.png')
 
+    def plotter_two(self, filename, plot_type):
+        if plot_type == "waveform":
+
+            f = Figure(figsize=(5,4), dpi=100)
+            a = f.add_subplot(111)
+            t = arange(0.0,3.0,0.01)
+            s = sin(2*pi*t)
+            a.plot(t,s)
+
+            canvas = FigureCanvas(f)  # a gtk.DrawingArea
+
+            # print "plotting", filename
+            # rate, data = wavfile.read(open(filename, 'r'))
+            # f = Figure(figsize=(4.5,0.5))
+            # self.drawing_area = FigureCanvas(f)
+            # a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
+            # a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
+            # a.axis('off')
+
+            return canvas
 
     # Lister funcs
 
