@@ -12,7 +12,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
 import scipy.io.wavfile as wavfile
 
-
 interface = """
 <ui>
     <menubar name="MenuBar">
