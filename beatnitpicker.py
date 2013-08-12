@@ -93,12 +93,7 @@ class GUI(object):
 
         # plot = gtk.Image()
         plot = self.plotter_two(filename, "waveform")
-        print vars(plot)
-        plot.show()
-        # plot.set_from_file("/home/pcoatmeur/spectrogram.png")
-
-        # label = gtk.Label("""Spectrum of frequencies in""" + os.path.basename(filename) + """.
-        # Horizontal axis represents time, Vertical axis represents frequency, and color represents amplitude""")
+        plot.set_size_request(300, 100)
 
         label = gtk.Label()
         label.set_markup("Spectrum of frequencies in <b>" + os.path.basename(filename) +
