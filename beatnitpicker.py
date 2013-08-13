@@ -13,6 +13,7 @@ from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanva
 import scipy.io.wavfile as wavfile
 
 from numpy import arange, sin, pi
+import matplotlib as plt
 
 interface = """
 <ui>
@@ -33,7 +34,6 @@ interface = """
     </menubar>
 </ui>
 """
-
 
 class GUI(object):
 
@@ -58,7 +58,7 @@ class GUI(object):
     #         title = os.path.basename(filename)
     #         text = "Not an audio file"
 
-    #     plot = self.plotter_two(filename, "waveform")
+    #     plot = self.plotter(filename, "waveform")
     #     # hbox.show()
 
     #     dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
@@ -91,12 +91,9 @@ class GUI(object):
             title = os.path.basename(filename)
             text = "Not an audio file"
 
-        # plot = gtk.Image()
 
-        # plotting_area = self.plotter_two(filename, "waveform", "neat")
-        # plotting_area.set_size_request(300, 100)
-
-        # plot = self.plotter_two(filename, "waveform", "neat")
+        pa = self.plotter(filename, "waveform", "full")
+        pa.set_size_request(300, 150)
 
         label = gtk.Label()
         label.set_markup("Spectrum of frequencies in <b>" + os.path.basename(filename) +
@@ -108,24 +105,25 @@ class GUI(object):
         dialog.format_secondary_text("Location :" + filename + '\r' + text)
 
         dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
-        dialog.vbox.pack_start(plotting_area)
+        dialog.vbox.pack_start(pa)
         dialog.vbox.pack_start(label)
         dialog.show_all()
 
-        resp = dialog.run()
-        if resp == gtk.RESPONSE_CLOSE:
-            dialog.destroy()
+        dialog.connect('destroy', lambda w: dialog.destroy())
+
+        dialog.run()
+        dialog.destroy()
 
     def about_box(self, widget):
         about = gtk.AboutDialog()
-        about.set_program_name("BeatNitPycker")
+        about.set_program_name("BeatNitPicker")
         about.set_version("0.1")
         about.set_copyright("(c) Philippe \"xaccrocheur\" Coatmeur")
         about.set_comments("Simple sound sample auditor")
         about.set_website("https://github.com/xaccrocheur")
         about.set_logo(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
 
-        about.set_license("BeatNitPycker is free software; you can redistribute it and/or modify "
+        about.set_license("BeatNitPicker is free software; you can redistribute it and/or modify "
                                   "it under the terms of the GNU General Public License as published by "
                                   "the Free Software Foundation, version 2.\n\n"
                                   "This program is distributed in the hope that it will be useful, "
@@ -157,7 +155,6 @@ class GUI(object):
         else:
             print "# Not an audio file"
 
-
     def __init__(self, dname = None):
 
         self.window = gtk.Window()
@@ -175,6 +172,10 @@ class GUI(object):
 
 
         self.treeview = gtk.TreeView()
+
+        # self.treeview.set_enable_search(True)
+        self.treeview.set_search_column(0)
+        # self.treeview.connect("cursor-changed", self.cursor_changed)
         self.tvcolumn = [None] * len(self.column_names)
         cellpb = gtk.CellRendererPixbuf()
         self.tvcolumn[0] = gtk.TreeViewColumn(self.column_names[0], cellpb)
@@ -182,7 +183,6 @@ class GUI(object):
         cell = gtk.CellRendererText()
         self.tvcolumn[0].pack_start(cell, False)
         self.tvcolumn[0].set_cell_data_func(cell, self.file_name)
-        self.tvcolumn[0].set_sort_column_id(0)
         self.treeview.append_column(self.tvcolumn[0])
         for n in range(1, len(self.column_names)):
             cell = gtk.CellRendererText()
@@ -190,14 +190,11 @@ class GUI(object):
             if n == 1:
                 cell.set_property('xalign', 1.0)
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
-            self.tvcolumn[n].set_sort_column_id(0)
             self.treeview.append_column(self.tvcolumn[n])
         self.treeview.set_model(self.listmodel)
 
-        tree_selection = self.treeview.get_selection()
-        tree_selection.set_mode(gtk.SELECTION_MULTIPLE)
-
-        self.listmodel.set_sort_func(0, self.lister_compare, None)
+        # self.listmodel.set_sort_func(0, self.lister_compare, None)
+        # self.tvcolumn[n].set_sort_column_id(0)
 
     # player
 
@@ -229,13 +226,10 @@ class GUI(object):
         self.toggle_button.connect("toggled", self.toggle_play, False)
         self.slider.connect('value-changed', self.on_slider_change)
         self.treeview.connect('row-activated', self.open_file)
-        # tree_selection.connect('changed', self.get_file_name)
 
         self.mainbox = gtk.VBox()
 
     # UI
-
-        # self.pimage = gtk.Image()
 
         scroll_list = gtk.ScrolledWindow()
         scroll_list.add(self.treeview)
@@ -284,7 +278,6 @@ class GUI(object):
 
 
     def get_selected_tree_row(self, *args):
-        # print "ToggleButton", button, "was turned %s" % ("off", "on")[widget.get_active()]
         audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
         treeview = self.treeview
         selection = treeview.get_selection()
@@ -299,7 +292,7 @@ class GUI(object):
             elif filename.endswith(tuple(audioFormats)):
                 return filename
             else:
-                print filename, "is a dir"
+                print filename, "is a directory"
 
 
     def toggle_play(self, button, filename):
@@ -328,6 +321,7 @@ class GUI(object):
 
 
     def player(self, button, filename):
+        self.plot_outbox.remove(self.plot_inbox)
         self.playbin.set_state(gst.STATE_READY)
         self.playbin.set_property('uri', 'file:///' + filename)
         self.is_playing = True
@@ -338,77 +332,54 @@ class GUI(object):
             self.vp = gtk.Viewport()
             self.sw = gtk.ScrolledWindow()
             self.vp.set_size_request(200, 200)
-            self.pa = self.plotter_two(filename, "waveform", "neat")
-            # self.sw.add(self.vp)
-            # self.vp.add(self.pa)
+            self.pa = self.plotter(filename, "waveform", "neat")
             self.pa.set_size_request(200, 60)
 
-            adjustment = gtk.Adjustment(0, lower=0, upper=100, step_incr=1, page_incr=10)
-
-            adj = self.sw.get_hadjustment()
-            adj.set_value( 50 )
-
-            self.sw.set_hadjustment(adj)
-
-            self.plot_outbox.remove(self.plot_inbox)
             self.plot_inbox = gtk.HBox()
-
             self.plot_inbox.pack_start(self.pa)
-
             self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
-            # self.plot_box.pack_start(self.plot_outbox, True, True, 0)
-
-            # self.drawing_area.set_background(gtk.gdk.Color(200, 0, 0))
             self.window.show_all()
-        print "------------------"
+            print "playing", filename
 
-    def plotter_two(self, filename, plot_type, plot_style):
+    def plotter(self, filename, plot_type, plot_style):
+        rate, data = wavfile.read(open(filename, 'r'))
+        f = Figure(facecolor = 'w')
+        a = f.add_subplot(111, axisbg='w')
+
         if plot_type == "waveform":
-
-            print "plotting", filename
-            rate, data = wavfile.read(open(filename, 'r'))
-            f = Figure()
-            a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
             a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
-            a.axis('off')
+            a.axhline(0, color='OrangeRed', lw=1)
+        else:
+            audio = input_data[1]
+            window = hann(1024)
+            audio = audio[0:1024] * window
+            # fft
+            mags = abs(rfft(audio))
+            # convert to dB
+            mags = 20 * scipy.log10(mags)
+            # normalise to 0 dB
+            mags -= max(mags)
+            plt.plot(mags)
+            plt.ylabel("Magnitude (dB)")
+            plt.xlabel("Frequency Bin")
+        if plot_style == "neat":
             f.subplots_adjust(0, 0, 1, 1)
-            if plot_style == "neat":
-                a.axis('off')
-            canvas = FigureCanvas(f)  # a gtk.DrawingArea
-            return canvas
-
-    def plotter(self, filename, plot_type):
-        if plot_type == "waveform":
-            rate, data = wavfile.read(open(filename, 'r'))
-            f = Figure(figsize=(4.5,0.5))
-            self.drawing_area = FigureCanvas(f)
-            a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
-            a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
             a.axis('off')
-            f.savefig(
-                os.path.expanduser('~') + '/.f.png',
-                height = 10,
-                width = 10,
-                type = 'jpg',
-                pointsize = 10,
-                sublines = 0,
-                toplines = 0,
-                leftlines = 0
-            )
-            self.pimage.set_from_file(os.path.expanduser('~') + '/.f.png')
+        canvas = FigureCanvas(f)  # a gtk.DrawingArea
+        return canvas
 
     # Lister funcs
 
-    def lister_compare(self, model, row1, row2, user_data):
-        sort_column, _ = model.get_sort_column_id()
-        value1 = model.get_value(row1, sort_column)
-        value2 = model.get_value(row2, sort_column)
-        if value1 < value2:
-            return -1
-        elif value1 == value2:
-            return 0
-        else:
-            return 1
+    # def lister_compare(self, model, row1, row2, user_data):
+    #     sort_column, _ = model.get_sort_column_id()
+    #     value1 = model.get_value(row1, sort_column)
+    #     value2 = model.get_value(row2, sort_column)
+    #     if value1 < value2:
+    #         return -1
+    #     elif value1 == value2:
+    #         return 0
+    #     else:
+    #         return 1
 
     def make_list(self, dname=None):
         if not dname:
@@ -468,23 +439,14 @@ class GUI(object):
         self.playbin.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, 0)
         self.slider.set_value(0)
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
-        self.toggle_button.set_active(False)
 
     def on_destroy(self, *args):
-        # NULL state allows the pipeline to release resources
         self.playbin.set_state(gst.STATE_NULL)
         self.is_playing = False
-        # os.environ['HOME']
-        try:
-            with open(os.path.expanduser('~') + '/.f.png'):
-                os.remove(os.path.expanduser('~') + '/.f.png')
-        except IOError:
-            pass
-
         gtk.main_quit()
 
     def on_slider_change(self, slider):
-        seek_time_secs = slider.get_value()
+        seek_time_secs = self.slider.get_value()
         self.playbin.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH | gst.SEEK_FLAG_KEY_UNIT, seek_time_secs * gst.SECOND)
 
     def update_slider(self):
@@ -492,14 +454,14 @@ class GUI(object):
             return False # cancel timeout
 
         try:
-            nanosecs, format = self.playbin.query_position(gst.FORMAT_TIME)
-            duration_nanosecs, format = self.playbin.query_duration(gst.FORMAT_TIME)
+            self.nanosecs, format = self.playbin.query_position(gst.FORMAT_TIME)
+            self.duration_nanosecs, format = self.playbin.query_duration(gst.FORMAT_TIME)
 
             # block seek handler so we don't seek when we set_value()
             self.slider.handler_block_by_func(self.on_slider_change)
 
-            self.slider.set_range(0, float(duration_nanosecs) / gst.SECOND)
-            self.slider.set_value(float(nanosecs) / gst.SECOND)
+            self.slider.set_range(0, float(self.duration_nanosecs) / gst.SECOND)
+            self.slider.set_value(float(self.nanosecs) / gst.SECOND)
 
             self.slider.handler_unblock_by_func(self.on_slider_change)
 
