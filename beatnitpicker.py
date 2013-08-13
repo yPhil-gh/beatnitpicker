@@ -338,9 +338,52 @@ class GUI(object):
             # plot = self.plotter_two(filename, "waveform", "neat")
             # self.mainbox.pack_start(plot)
 
+            # self.plotting_area = self.plotter_two(filename, "waveform", "neat")
+            # self.plotting_area.set_size_request(400, 200)
+
+            # self.plot_sw = gtk.ScrolledWindow()
+
+            # self.cropped_buffer = self.plotting_area.subpixbuf(x,y,140,100)
+
+            # self.plot_sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_NEVER)
+
+            # self.plot_sw.add_with_viewport(self.plotting_area)
+            # self.plot_sw.add(self.plotting_area)
+
+            # self.sw = gtk.ScrolledWindow()
+            # self.sw.set_policy(gtk.POLICY_ALWAYS, gtk.POLICY_ALWAYS)
+            # self.sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_NEVER)
+            self.viewport = gtk.Viewport()
+            self.viewport.set_size_request(200, 200)
+            # drawing_area = gtk.DrawingArea()
             self.plotting_area = self.plotter_two(filename, "waveform", "neat")
-            self.plotting_area.set_size_request(200, 60)
-            self.plot_hbox.pack_start(self.plotting_area, True, True, 1)
+            # self.sw.add(self.viewport)
+            self.viewport.add(self.plotting_area)
+            self.plotting_area.set_size_request(400, 200)
+
+            # layout = gtk.Layout()
+            # layout.set_size(400, 200)
+
+            # layout.put(self.plotting_area, 0, 0)
+            # # layout.move(self.plotting_area, x, y)
+
+            # adjustment = self.viewport.get_vadjustment()
+            # adjustment = self.viewport.get_hadjustment()
+
+            # adjustment = gtk.Adjustment(10, lower=0, upper=0, step_incr=5, page_incr=-5, page_size=5)
+            # adjustment = gtk.Adjustment(value=0, lower=0, upper=0, step_incr=0, page_incr=0, page_size=0)
+
+            # self.plotting_area.gtk_adjustment_set_value(adjustment, gtk_adjustment_get_upper(adjustment))
+
+            # self.viewport.set_hadjustment(adjustment)
+            # self.viewport.set_vadjustment(adjustment)
+
+            # print int(self.viewport.get_vadjustment())
+            # print self.viewport.get_hadjustment()
+            # self.sw.show()
+            # self.viewport.show()
+            # self.plotting_area.show()
+            self.plot_hbox.pack_start(self.viewport, True, True, 1)
 
             # self.drawing_area.set_background(gtk.gdk.Color(200, 0, 0))
             self.window.show_all()
@@ -378,8 +421,6 @@ class GUI(object):
             print "plotting", filename
             rate, data = wavfile.read(open(filename, 'r'))
             f = Figure()
-            self.drawing_area = FigureCanvas(f)
-            # self.drawing_area.set_size_request(300, 300)
             a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
             a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
             if plot_style == "neat":
