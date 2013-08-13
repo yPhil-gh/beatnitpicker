@@ -266,9 +266,9 @@ class GUI(object):
 
     # Packs
 
-        self.plot_hbox = gtk.HBox(True, 0)
+        # self.plot_hbox = gtk.HBox(True, 0)
         self.plot_vbox = gtk.VBox(True, 0)
-        self.plot_vbox.pack_start(self.plot_hbox, True, True, 0)
+        # self.plot_vbox.pack_start(self.plot_hbox, True, True, 0)
 
 
         self.mainbox.pack_start(menubar, False)
@@ -351,7 +351,7 @@ class GUI(object):
 
             self.sw.set_hadjustment(adj)
 
-            self.plot_hbox.pack_start(self.pa, True, True, 0)
+            self.plot_vbox.pack_start(self.pa, True, True, 0)
 
             # self.drawing_area.set_background(gtk.gdk.Color(200, 0, 0))
             self.window.show_all()
