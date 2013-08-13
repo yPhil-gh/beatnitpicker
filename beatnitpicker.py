@@ -39,39 +39,6 @@ class GUI(object):
 
     column_names = ['Name', 'Size', 'Mode', 'Last Changed']
 
-    # def get_info(self, filename):
-    #     newitem = gst.pbutils.Discoverer(50000000000)
-    #     info = newitem.discover_uri("file://" + filename)
-    #     tags = info.get_tags()
-    #     mystring = ""
-    #     for tag_name in tags.keys():
-    #         mystring += tag_name + " : " + str(tags[tag_name]) + '\r\n'
-    #     return mystring
-
-    # def file_properties_dialog(self, widget):
-    #     audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
-    #     filename = self.get_selected_tree_row(self)
-    #     if filename.endswith(tuple(audioFormats)):
-    #         title = os.path.basename(filename)
-    #         text = self.get_info(filename)
-    #     else:
-    #         title = os.path.basename(filename)
-    #         text = "Not an audio file"
-
-    #     plot = self.plotter(filename, "waveform")
-    #     # hbox.show()
-
-    #     dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
-    #     # dialog.format_secondary_text(info)
-    #     dialog.set_title("BeatNitPicker audio file info")
-    #     dialog.format_secondary_text("Location :" + filename + '\r' + text)
-    #     dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
-    #     dialog.vbox.pack_start(plot, True, True, 0)
-    #     plot.show()
-    #     resp = dialog.run()
-    #     if resp == gtk.RESPONSE_CLOSE:
-    #         dialog.destroy()
-
     def get_info(self, filename):
         newitem = gst.pbutils.Discoverer(50000000000)
         info = newitem.discover_uri("file://" + filename)
@@ -151,7 +118,7 @@ class GUI(object):
             new_model = self.make_list(filename)
             treeview.set_model(new_model)
         elif filename.endswith(tuple(audioFormats)):
-            self.toggle_play(self, filename)
+            self.toggle_play(self, filename, "current")
         else:
             print "# Not an audio file"
 
@@ -203,6 +170,8 @@ class GUI(object):
         self.toggle_button = gtk.Button()
         self.toggle_button = gtk.ToggleButton(None)
 
+        self.next_button = gtk.Button("Next")
+
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
 
         self.buttons_hbox = gtk.HBox()
@@ -211,6 +180,9 @@ class GUI(object):
         self.slider.set_increments(1, 10)
 
         self.buttons_hbox.pack_start(self.toggle_button, False)
+
+        self.buttons_hbox.pack_start(self.next_button, False)
+
         self.slider_hbox.pack_start(self.slider, True, True)
 
         self.playbin = gst.element_factory_make('playbin2')
@@ -223,7 +195,8 @@ class GUI(object):
     # end player
 
     # Connects
-        self.toggle_button.connect("toggled", self.toggle_play, False)
+        self.toggle_button.connect("toggled", self.toggle_play, None, "current")
+        self.next_button.connect("clicked", self.toggle_play, None, "next")
         self.slider.connect('value-changed', self.on_slider_change)
         self.treeview.connect('row-activated', self.open_file)
 
@@ -258,7 +231,8 @@ class GUI(object):
 
         menubar = uimanager.get_widget("/MenuBar")
 
-    # Packs
+        # Packs
+
 
         self.mainbox.pack_start(menubar, False)
 
@@ -288,14 +262,52 @@ class GUI(object):
             filename = os.path.join(self.dirname, model.get_value(iter, 0))
             filestat = os.stat(filename)
             if stat.S_ISDIR(filestat.st_mode):
-                print "Directory :", filename
+                print filename, "is a directory"
             elif filename.endswith(tuple(audioFormats)):
                 return filename
             else:
-                print filename, "is a directory"
+                print filename, "is not an audio file"
 
+    def get_next_tree_row(self, *args):
+        # current = ""
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
+        treeview = self.treeview
+        selection = treeview.get_selection()
+        (model, pathlist) = selection.get_selected_rows()
+        slider_position =  self.slider.get_value()
+        for path in pathlist :
+            iter = model.get_iter(path)
+            next_iter = model.iter_next(iter)
+            filename = os.path.join(self.dirname, model.get_value(iter, 0))
+            next_filename = os.path.join(self.dirname, model.get_value(next_iter, 0))
+            filestat = os.stat(next_filename)
+            current = filename
+            if stat.S_ISDIR(filestat.st_mode):
+                print next_filename, "is a ddirectory"
+                # next_filename = self.get_next_tree_row(self)
+                print "current", current
+                print "next", next_filename
+                # if next_filename != current:
+            elif next_filename.endswith(tuple(audioFormats)):
+                return next_filename
+                print "Audio OK, current", current
+                print "next", next_filename
+            else:
+                print next_filename, "is not an audio file"
+                print "current", current
+                print "next", next_filename
+                if current != next_filename:
+                    if self.get_next_tree_row(self):
+                        # next_filename = self.get_next_tree_row(self)
+                        return next_filename
+                    else:
+                        return next_filename
 
-    def toggle_play(self, button, filename):
+    def toggle_play(self, button, filename, position):
+        if position == "current":
+            print "yep", self.get_next_tree_row(self)
+        else:
+            print "nope", self.get_next_tree_row(self)
         if not self.get_selected_tree_row(self):
             return
         if filename:
@@ -339,7 +351,7 @@ class GUI(object):
             self.plot_inbox.pack_start(self.pa)
             self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
             self.window.show_all()
-            print "playing", filename
+            print "--------------------- playing", filename
 
     def plotter(self, filename, plot_type, plot_style):
         rate, data = wavfile.read(open(filename, 'r'))
