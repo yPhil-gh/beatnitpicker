@@ -266,8 +266,8 @@ class GUI(object):
 
     # Packs
 
-        self.plot_hbox = gtk.HBox(False, 0)
-        self.plot_vbox = gtk.VBox(False, 0)
+        self.plot_hbox = gtk.HBox(True, 0)
+        self.plot_vbox = gtk.VBox(True, 0)
         self.plot_vbox.pack_start(self.plot_hbox, True, True, 0)
 
 
@@ -335,59 +335,42 @@ class GUI(object):
         self.playbin.set_state(gst.STATE_PLAYING)
         gobject.timeout_add(100, self.update_slider)
         if filename.endswith(".wav") or filename.endswith(".WAV"):
-            # plot = self.plotter_two(filename, "waveform", "neat")
-            # self.mainbox.pack_start(plot)
 
-            # self.plotting_area = self.plotter_two(filename, "waveform", "neat")
-            # self.plotting_area.set_size_request(400, 200)
+            self.vp = gtk.Viewport()
+            self.sw = gtk.ScrolledWindow()
+            self.vp.set_size_request(200, 200)
+            self.pa = self.plotter_two(filename, "waveform", "neat")
+            # self.sw.add(self.vp)
+            # self.vp.add(self.pa)
+            self.pa.set_size_request(200, 60)
 
-            # self.plot_sw = gtk.ScrolledWindow()
+            adjustment = gtk.Adjustment(0, lower=0, upper=100, step_incr=1, page_incr=10)
 
-            # self.cropped_buffer = self.plotting_area.subpixbuf(x,y,140,100)
+            adj = self.sw.get_hadjustment()
+            adj.set_value( 50 )
 
-            # self.plot_sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_NEVER)
+            self.sw.set_hadjustment(adj)
 
-            # self.plot_sw.add_with_viewport(self.plotting_area)
-            # self.plot_sw.add(self.plotting_area)
-
-            # self.sw = gtk.ScrolledWindow()
-            # self.sw.set_policy(gtk.POLICY_ALWAYS, gtk.POLICY_ALWAYS)
-            # self.sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_NEVER)
-            self.viewport = gtk.Viewport()
-            self.viewport.set_size_request(200, 200)
-            # drawing_area = gtk.DrawingArea()
-            self.plotting_area = self.plotter_two(filename, "waveform", "neat")
-            # self.sw.add(self.viewport)
-            self.viewport.add(self.plotting_area)
-            self.plotting_area.set_size_request(400, 200)
-
-            # layout = gtk.Layout()
-            # layout.set_size(400, 200)
-
-            # layout.put(self.plotting_area, 0, 0)
-            # # layout.move(self.plotting_area, x, y)
-
-            # adjustment = self.viewport.get_vadjustment()
-            # adjustment = self.viewport.get_hadjustment()
-
-            # adjustment = gtk.Adjustment(10, lower=0, upper=0, step_incr=5, page_incr=-5, page_size=5)
-            # adjustment = gtk.Adjustment(value=0, lower=0, upper=0, step_incr=0, page_incr=0, page_size=0)
-
-            # self.plotting_area.gtk_adjustment_set_value(adjustment, gtk_adjustment_get_upper(adjustment))
-
-            # self.viewport.set_hadjustment(adjustment)
-            # self.viewport.set_vadjustment(adjustment)
-
-            # print int(self.viewport.get_vadjustment())
-            # print self.viewport.get_hadjustment()
-            # self.sw.show()
-            # self.viewport.show()
-            # self.plotting_area.show()
-            self.plot_hbox.pack_start(self.viewport, True, True, 1)
+            self.plot_hbox.pack_start(self.pa, True, True, 0)
 
             # self.drawing_area.set_background(gtk.gdk.Color(200, 0, 0))
             self.window.show_all()
         print "------------------"
+
+    def plotter_two(self, filename, plot_type, plot_style):
+        if plot_type == "waveform":
+
+            print "plotting", filename
+            rate, data = wavfile.read(open(filename, 'r'))
+            f = Figure()
+            a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
+            a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
+            a.axis('off')
+            f.subplots_adjust(0, 0, 1, 1)
+            if plot_style == "neat":
+                a.axis('off')
+            canvas = FigureCanvas(f)  # a gtk.DrawingArea
+            return canvas
 
     def plotter(self, filename, plot_type):
         if plot_type == "waveform":
@@ -408,25 +391,6 @@ class GUI(object):
                 leftlines = 0
             )
             self.pimage.set_from_file(os.path.expanduser('~') + '/.f.png')
-
-    def plotter_two(self, filename, plot_type, plot_style):
-        if plot_type == "waveform":
-
-            # f = Figure(figsize=(5,4), dpi=100)
-            # a = f.add_subplot(111)
-            # t = arange(0.0,3.0,0.01)
-            # s = sin(2*pi*t)
-            # a.plot(t,s)
-
-            print "plotting", filename
-            rate, data = wavfile.read(open(filename, 'r'))
-            f = Figure()
-            a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
-            a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
-            if plot_style == "neat":
-                a.axis('off')
-            canvas = FigureCanvas(f)  # a gtk.DrawingArea
-            return canvas
 
     # Lister funcs
 
