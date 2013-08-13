@@ -290,46 +290,41 @@ class GUI(object):
                 # if next_filename != current:
             elif next_filename.endswith(tuple(audioFormats)):
                 return next_filename
-                print "Audio OK, current", current
-                print "next", next_filename
             else:
                 print next_filename, "is not an audio file"
                 print "current", current
                 print "next", next_filename
-                if current != next_filename:
-                    if self.get_next_tree_row(self):
-                        # next_filename = self.get_next_tree_row(self)
-                        return next_filename
-                    else:
-                        return next_filename
 
     def toggle_play(self, button, filename, position):
         if position == "current":
-            print "yep", self.get_next_tree_row(self)
+            print "ccurrent", self.get_next_tree_row(self)
+            if not self.get_selected_tree_row(self):
+                return
+            if filename:
+                self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+                self.player(self, filename)
+            else:
+                filename = self.get_selected_tree_row(self)
+                slider_position =  self.slider.get_value()
+                if self.is_playing:
+                    self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+                    self.is_playing = False
+                    self.playbin.set_state(gst.STATE_PAUSED)
+                else:
+                    if slider_position > 0.0:
+                        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+                        self.playbin.set_state(gst.STATE_PLAYING)
+                        gobject.timeout_add(100, self.update_slider)
+                        self.is_playing = True
+                    else:
+                        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+                        self.player(self, filename)
+                        self.is_playing = True
         else:
-            print "nope", self.get_next_tree_row(self)
-        if not self.get_selected_tree_row(self):
-            return
-        if filename:
+            filename = self.get_next_tree_row(self)
+            print "Playing next file :", filename
             self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
             self.player(self, filename)
-        else:
-            filename = self.get_selected_tree_row(self)
-            slider_position =  self.slider.get_value()
-            if self.is_playing:
-                self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
-                self.is_playing = False
-                self.playbin.set_state(gst.STATE_PAUSED)
-            else:
-                if slider_position > 0.0:
-                    self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
-                    self.playbin.set_state(gst.STATE_PLAYING)
-                    gobject.timeout_add(100, self.update_slider)
-                    self.is_playing = True
-                else:
-                    self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
-                    self.player(self, filename)
-                    self.is_playing = True
 
 
     def player(self, button, filename):
