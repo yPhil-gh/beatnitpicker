@@ -266,14 +266,13 @@ class GUI(object):
 
     # Packs
 
-        # self.plot_hbox = gtk.HBox(True, 0)
-        self.plot_vbox = gtk.VBox(True, 0)
-        # self.plot_vbox.pack_start(self.plot_hbox, True, True, 0)
-
-
         self.mainbox.pack_start(menubar, False)
 
-        self.mainbox.pack_start(self.plot_vbox, False, False, 1)
+        self.plot_inbox = gtk.HBox(True, 0)
+        self.plot_outbox = gtk.VBox(True, 0)
+        self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
+
+        self.mainbox.pack_start(self.plot_outbox, False, False, 1)
         self.mainbox.pack_start(self.slider_hbox, False, False, 1)
         self.mainbox.pack_start(self.buttons_hbox, False, False, 1)
         self.mainbox.pack_start(scroll_list, True, True, 1)
@@ -351,7 +350,13 @@ class GUI(object):
 
             self.sw.set_hadjustment(adj)
 
-            self.plot_vbox.pack_start(self.pa, True, True, 0)
+            self.plot_outbox.remove(self.plot_inbox)
+            self.plot_inbox = gtk.HBox()
+
+            self.plot_inbox.pack_start(self.pa)
+
+            self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
+            # self.plot_box.pack_start(self.plot_outbox, True, True, 0)
 
             # self.drawing_area.set_background(gtk.gdk.Color(200, 0, 0))
             self.window.show_all()
