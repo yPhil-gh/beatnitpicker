@@ -92,8 +92,11 @@ class GUI(object):
             text = "Not an audio file"
 
         # plot = gtk.Image()
-        plot = self.plotter_two(filename, "waveform")
-        plot.set_size_request(300, 100)
+
+        # plotting_area = self.plotter_two(filename, "waveform", "neat")
+        # plotting_area.set_size_request(300, 100)
+
+        # plot = self.plotter_two(filename, "waveform", "neat")
 
         label = gtk.Label()
         label.set_markup("Spectrum of frequencies in <b>" + os.path.basename(filename) +
@@ -105,7 +108,7 @@ class GUI(object):
         dialog.format_secondary_text("Location :" + filename + '\r' + text)
 
         dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
-        dialog.vbox.pack_start(plot)
+        dialog.vbox.pack_start(plotting_area)
         dialog.vbox.pack_start(label)
         dialog.show_all()
 
@@ -228,12 +231,12 @@ class GUI(object):
         self.treeview.connect('row-activated', self.open_file)
         # tree_selection.connect('changed', self.get_file_name)
 
-        vbox = gtk.VBox()
+        self.mainbox = gtk.VBox()
 
     # UI
 
-        self.plot_hbox = gtk.HBox()
-        self.pimage = gtk.Image()
+        # self.pimage = gtk.Image()
+
         scroll_list = gtk.ScrolledWindow()
         scroll_list.add(self.treeview)
 
@@ -262,14 +265,20 @@ class GUI(object):
         menubar = uimanager.get_widget("/MenuBar")
 
     # Packs
-        vbox.pack_start(menubar, False)
-        self.plot_hbox.pack_start(self.pimage, True, True, 1)
-        vbox.pack_start(self.plot_hbox, False, False, 1)
-        vbox.pack_start(self.slider_hbox, False, False, 1)
-        vbox.pack_start(self.buttons_hbox, False, False, 1)
-        vbox.pack_start(scroll_list, True, True, 1)
 
-        self.window.add(vbox)
+        self.plot_hbox = gtk.HBox(False, 0)
+        self.plot_vbox = gtk.VBox(False, 0)
+        self.plot_vbox.pack_start(self.plot_hbox, True, True, 0)
+
+
+        self.mainbox.pack_start(menubar, False)
+
+        self.mainbox.pack_start(self.plot_vbox, False, False, 1)
+        self.mainbox.pack_start(self.slider_hbox, False, False, 1)
+        self.mainbox.pack_start(self.buttons_hbox, False, False, 1)
+        self.mainbox.pack_start(scroll_list, True, True, 1)
+
+        self.window.add(self.mainbox)
         self.window.show_all()
         self.treeview.grab_focus()
         return
@@ -326,7 +335,15 @@ class GUI(object):
         self.playbin.set_state(gst.STATE_PLAYING)
         gobject.timeout_add(100, self.update_slider)
         if filename.endswith(".wav") or filename.endswith(".WAV"):
-            self.plotter(filename, "waveform")
+            # plot = self.plotter_two(filename, "waveform", "neat")
+            # self.mainbox.pack_start(plot)
+
+            self.plotting_area = self.plotter_two(filename, "waveform", "neat")
+            self.plotting_area.set_size_request(200, 60)
+            self.plot_hbox.pack_start(self.plotting_area, True, True, 1)
+
+            # self.drawing_area.set_background(gtk.gdk.Color(200, 0, 0))
+            self.window.show_all()
         print "------------------"
 
     def plotter(self, filename, plot_type):
@@ -349,25 +366,25 @@ class GUI(object):
             )
             self.pimage.set_from_file(os.path.expanduser('~') + '/.f.png')
 
-    def plotter_two(self, filename, plot_type):
+    def plotter_two(self, filename, plot_type, plot_style):
         if plot_type == "waveform":
 
-            f = Figure(figsize=(5,4), dpi=100)
-            a = f.add_subplot(111)
-            t = arange(0.0,3.0,0.01)
-            s = sin(2*pi*t)
-            a.plot(t,s)
+            # f = Figure(figsize=(5,4), dpi=100)
+            # a = f.add_subplot(111)
+            # t = arange(0.0,3.0,0.01)
+            # s = sin(2*pi*t)
+            # a.plot(t,s)
 
+            print "plotting", filename
+            rate, data = wavfile.read(open(filename, 'r'))
+            f = Figure()
+            self.drawing_area = FigureCanvas(f)
+            # self.drawing_area.set_size_request(300, 300)
+            a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
+            a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
+            if plot_style == "neat":
+                a.axis('off')
             canvas = FigureCanvas(f)  # a gtk.DrawingArea
-
-            # print "plotting", filename
-            # rate, data = wavfile.read(open(filename, 'r'))
-            # f = Figure(figsize=(4.5,0.5))
-            # self.drawing_area = FigureCanvas(f)
-            # a = f.add_subplot(111, axisbg=(0.1843, 0.3098, 0.3098))
-            # a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
-            # a.axis('off')
-
             return canvas
 
     # Lister funcs
