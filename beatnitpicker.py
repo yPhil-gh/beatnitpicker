@@ -181,7 +181,7 @@ class GUI(object):
 
         self.buttons_hbox.pack_start(self.toggle_button, False)
 
-        self.buttons_hbox.pack_start(self.next_button, False)
+        # self.buttons_hbox.pack_start(self.next_button, False)
 
         self.slider_hbox.pack_start(self.slider, True, True)
 
