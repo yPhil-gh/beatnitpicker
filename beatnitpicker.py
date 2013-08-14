@@ -351,7 +351,6 @@ class GUI(object):
             self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
             self.player(self, filename)
 
-
     def player(self, button, filename):
         # self.plot_outbox.remove(self.plot_inbox)
         self.plot_outbox.remove(self.plot_inbox)
