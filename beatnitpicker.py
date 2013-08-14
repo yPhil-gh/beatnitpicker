@@ -130,6 +130,9 @@ class GUI(object):
         else:
             print "# Not an audio file"
 
+    def cursor_changed(self,w,e=None):
+        self.treeview.grab_focus()
+
     def __init__(self, dname = None):
 
         self.window = gtk.Window()
@@ -162,14 +165,15 @@ class GUI(object):
         for n in range(1, len(self.column_names)):
             cell = gtk.CellRendererText()
             self.tvcolumn[n] = gtk.TreeViewColumn(self.column_names[n], cell)
+            self.tvcolumn[n].set_sort_column_id(n)
             if n == 1:
                 cell.set_property('xalign', 1.0)
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
             self.treeview.append_column(self.tvcolumn[n])
         self.treeview.set_model(self.listmodel)
+        self.treeview.connect("cursor-changed", self.cursor_changed)
 
         # self.listmodel.set_sort_func(0, self.lister_compare, None)
-        # self.tvcolumn[n].set_sort_column_id(0)
 
     # player
         self.label = gtk.Label()
@@ -187,12 +191,12 @@ class GUI(object):
 
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON))
 
-        self.buttons_hbox = gtk.HBox()
+        self.buttons_hbox = gtk.HBox(False, 5)
         self.slider_hbox = gtk.HBox()
         self.slider.set_range(0, 100)
         self.slider.set_increments(1, 10)
 
-        self.buttons_hbox.pack_start(self.toggle_button, False, False, 0)
+        self.buttons_hbox.pack_start(self.toggle_button, False, True, 0)
         self.buttons_hbox.pack_start(self.label, False, False, 0)
 
         # self.buttons_hbox.pack_start(self.next_button, False)
@@ -403,16 +407,16 @@ class GUI(object):
 
     # Lister funcs
 
-    # def lister_compare(self, model, row1, row2, user_data):
-    #     sort_column, _ = model.get_sort_column_id()
-    #     value1 = model.get_value(row1, sort_column)
-    #     value2 = model.get_value(row2, sort_column)
-    #     if value1 < value2:
-    #         return -1
-    #     elif value1 == value2:
-    #         return 0
-    #     else:
-    #         return 1
+    def lister_compare(self, model, row1, row2, user_data):
+        sort_column, _ = model.get_sort_column_id()
+        value1 = model.get_value(row1, sort_column)
+        value2 = model.get_value(row2, sort_column)
+        if value1 < value2:
+            return -1
+        elif value1 == value2:
+            return 0
+        else:
+            return 1
 
     def make_list(self, dname=None):
         if not dname:
