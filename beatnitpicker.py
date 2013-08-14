@@ -159,12 +159,26 @@ class GUI(object):
         self.tvcolumn[0].set_cell_data_func(cellpb, self.file_pixbuf)
         cell = gtk.CellRendererText()
         self.tvcolumn[0].pack_start(cell, False)
+
+
+
         self.tvcolumn[0].set_cell_data_func(cell, self.file_name)
         self.treeview.append_column(self.tvcolumn[0])
         for n in range(1, len(self.column_names)):
             cell = gtk.CellRendererText()
             self.tvcolumn[n] = gtk.TreeViewColumn(self.column_names[n], cell)
+
+            # set the cell "text" attribute to column 0 - retrieve text
+            # from that column in treestore
+            # self.tvcolumn[n].add_attribute(cell, 'text', 0)
+
+            # make it searchable
+            self.treeview.set_search_column(0)
+
+            # Allow sorting on the column
             self.tvcolumn[n].set_sort_column_id(n)
+
+            # self.tvcolumn[n].set_sort_column_id(n)
             if n == 1:
                 cell.set_property('xalign', 1.0)
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
