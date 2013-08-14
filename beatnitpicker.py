@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, gobject, stat, time, argparse
+import os, sys, gobject, stat, time, argparse, re
 
 import gst, gtk
 gobject.threads_init()
@@ -14,6 +14,19 @@ import scipy.io.wavfile as wavfile
 
 from numpy import arange, sin, pi
 import matplotlib as plt
+
+
+beatnitpicker_license = """
+BeatNitPicker is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 2.\n\n
+This program is distributed in the hope that it will be useful,
+GNU General Public License for more details.\n\n
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA)
+"""
+
 
 interface = """
 <ui>
@@ -39,41 +52,53 @@ class GUI(object):
 
     column_names = ['Name', 'Size', 'Mode', 'Last Changed']
 
-    def get_info(self, filename):
+    def get_info(self, filename, style="short"):
+        if style == "full":
+            newitem = gst.pbutils.Discoverer(50000000000)
+            info = newitem.discover_uri("file://" + filename)
+            tags = info.get_tags()
+            mystring = ""
+            for tag_name in tags.keys():
+                if tag_name != "image":
+                    mystring += tag_name + " : " + str(tags[tag_name]) + '\r\n'
+            return mystring
+
+    def dig_info(self, filename, element):
         newitem = gst.pbutils.Discoverer(50000000000)
         info = newitem.discover_uri("file://" + filename)
         tags = info.get_tags()
         mystring = ""
         for tag_name in tags.keys():
-            mystring += tag_name + " : " + str(tags[tag_name]) + '\r\n'
-        return mystring
+            if tag_name == element:
+                mystring += " " + str(tags[tag_name]) + '\r\n'
+                # print str(tags[tag_name])
+                return mystring
 
     def file_properties_dialog(self, widget):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
+
         filename = self.get_selected_tree_row(self)
         if filename.endswith(tuple(audioFormats)):
             title = os.path.basename(filename)
-            text = self.get_info(filename)
+            text = self.get_info(filename, style="full")
         else:
             title = os.path.basename(filename)
             text = "Not an audio file"
 
-
-        pa = self.plotter(filename, "waveform", "full")
-        pa.set_size_request(300, 150)
-
-        label = gtk.Label()
-        label.set_markup("Spectrum of frequencies in <b>" + os.path.basename(filename) +
-                         "</b>. \nHorizontal axis represents time. \nVertical axis represents frequency, and color represents amplitude.")
-
         dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
-        # dialog.format_secondary_text(info)
+
+        if filename.endswith(".wav") or filename.endswith(".WAV"):
+            pa = self.plotter(filename, "waveform", "full")
+            pa.set_size_request(350, 200)
+            dialog.vbox.pack_start(pa)
+
         dialog.set_title("BeatNitPicker audio file info")
-        dialog.format_secondary_text("Location :" + filename + '\r' + text)
+        dialog.format_secondary_text("Location :" + filename + '\r' + str(text))
+
+        print filename
+        print text
 
         dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
-        dialog.vbox.pack_start(pa)
-        dialog.vbox.pack_start(label)
         dialog.show_all()
 
         dialog.connect('destroy', lambda w: dialog.destroy())
@@ -84,32 +109,19 @@ class GUI(object):
     def about_box(self, widget):
         about = gtk.AboutDialog()
         about.set_program_name("BeatNitPicker")
-        about.set_version("0.1")
+        about.set_version("0.2")
         about.set_copyright("(c) Philippe \"xaccrocheur\" Coatmeur")
         about.set_comments("Simple sound sample auditor")
         about.set_website("https://github.com/xaccrocheur")
         about.set_logo(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
 
-        about.set_license("BeatNitPicker is free software; you can redistribute it and/or modify "
-                                  "it under the terms of the GNU General Public License as published by "
-                                  "the Free Software Foundation, version 2.\n\n"
-                                  "This program is distributed in the hope that it will be useful, "
-                                  "GNU General Public License for more details.\n\n"
-                                  "You should have received a copy of the GNU General Public License "
-                                  "along with this program; if not, write to the Free Software "
-                                  "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA")
-        about.set_wrap_license(True);
+        about.set_license(beatnitpicker_license)
+        # about.set_wrap_license(True)
         about.run()
         about.destroy()
 
-    def audiofile_info(self, filename):
-        # u = urllib2.urlopen(url)
-        meta = filename.info()
-        file_size = int(meta.getheaders('Content-Length')[0])
-        estimated_bitrate = file_size/length_secs/1000*8
-
     def open_file(self, treeview, path, button, *args):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
         model = treeview.get_model()
         iter = model.get_iter(path)
         filename = os.path.join(self.dirname, model.get_value(iter, 0))
@@ -164,6 +176,11 @@ class GUI(object):
         # self.tvcolumn[n].set_sort_column_id(0)
 
     # player
+        self.label = gtk.Label()
+        # alignment = gtk.Alignment(0.5, 0.5, 0.5, 0.5)
+
+        self.label.set_alignment(0,0.5)
+        self.label.set_markup("<b> Plop</b>\n Xx")
 
         self.slider = gtk.HScale()
 
@@ -172,14 +189,15 @@ class GUI(object):
 
         self.next_button = gtk.Button("Next")
 
-        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON))
 
         self.buttons_hbox = gtk.HBox()
         self.slider_hbox = gtk.HBox()
         self.slider.set_range(0, 100)
         self.slider.set_increments(1, 10)
 
-        self.buttons_hbox.pack_start(self.toggle_button, False)
+        self.buttons_hbox.pack_start(self.toggle_button, False, False, 0)
+        self.buttons_hbox.pack_start(self.label, False, False, 0)
 
         # self.buttons_hbox.pack_start(self.next_button, False)
 
@@ -233,7 +251,6 @@ class GUI(object):
 
         # Packs
 
-
         self.mainbox.pack_start(menubar, False)
 
         self.plot_inbox = gtk.HBox(True, 0)
@@ -252,7 +269,7 @@ class GUI(object):
 
 
     def get_selected_tree_row(self, *args):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
         treeview = self.treeview
         selection = treeview.get_selection()
         (model, pathlist) = selection.get_selected_rows()
@@ -270,7 +287,7 @@ class GUI(object):
 
     def get_next_tree_row(self, *args):
         # current = ""
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
+        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
         treeview = self.treeview
         selection = treeview.get_selection()
         (model, pathlist) = selection.get_selected_rows()
@@ -298,14 +315,16 @@ class GUI(object):
     def toggle_play(self, button, filename, position):
         if position == "current":
             print "ccurrent", self.get_next_tree_row(self)
-            if not self.get_selected_tree_row(self):
-                return
+            # if not self.get_selected_tree_row(self):
+                # return
             if filename:
                 self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
                 self.player(self, filename)
+
             else:
                 filename = self.get_selected_tree_row(self)
                 slider_position =  self.slider.get_value()
+
                 if self.is_playing:
                     self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
                     self.is_playing = False
@@ -320,6 +339,12 @@ class GUI(object):
                         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
                         self.player(self, filename)
                         self.is_playing = True
+
+            # self.label = gtk.Label()
+            re.search('(?<=abc)def', 'abcdef')
+            audio_codec_tag = self.dig_info(filename, "audio-codec")
+            self.label.set_markup("<b> " + os.path.basename(filename) + "</b>\n" + audio_codec_tag)
+            self.buttons_hbox.pack_start(self.label, True)
         else:
             filename = self.get_next_tree_row(self)
             print "Playing next file :", filename
@@ -328,7 +353,11 @@ class GUI(object):
 
 
     def player(self, button, filename):
+        # self.plot_outbox.remove(self.plot_inbox)
         self.plot_outbox.remove(self.plot_inbox)
+
+        self.buttons_hbox.remove(self.label)
+
         self.playbin.set_state(gst.STATE_READY)
         self.playbin.set_property('uri', 'file:///' + filename)
         self.is_playing = True
@@ -342,6 +371,7 @@ class GUI(object):
             self.pa = self.plotter(filename, "waveform", "neat")
             self.pa.set_size_request(200, 60)
 
+
             self.plot_inbox = gtk.HBox()
             self.plot_inbox.pack_start(self.pa)
             self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
@@ -351,11 +381,15 @@ class GUI(object):
     def plotter(self, filename, plot_type, plot_style):
         rate, data = wavfile.read(open(filename, 'r'))
         f = Figure(facecolor = 'w')
+        f.patch.set_alpha(1)
         a = f.add_subplot(111, axisbg='w')
+        # a.patch.set_alpha(0.5)
 
         if plot_type == "waveform":
             a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
-            a.axhline(0, color='OrangeRed', lw=1)
+            a.axhline(0, color='DimGray', lw=1)
+            a.set_xticklabels(["", ""])
+            a.set_yticklabels(["", ""])
         else:
             audio = input_data[1]
             window = hann(1024)
