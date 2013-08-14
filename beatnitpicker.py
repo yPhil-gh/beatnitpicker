@@ -352,6 +352,7 @@ class GUI(object):
             self.player(self, filename)
 
 
+
     def player(self, button, filename):
         # self.plot_outbox.remove(self.plot_inbox)
         self.plot_outbox.remove(self.plot_inbox)
