@@ -71,7 +71,6 @@ class GUI(object):
         for tag_name in tags.keys():
             if tag_name == element:
                 mystring += " " + str(tags[tag_name]) + '\r\n'
-                # print str(tags[tag_name])
                 return mystring
 
     def file_properties_dialog(self, widget):
@@ -94,9 +93,6 @@ class GUI(object):
 
         dialog.set_title("BeatNitPicker audio file info")
         dialog.format_secondary_text("Location :" + filename + '\r' + str(text))
-
-        print filename
-        print text
 
         dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
         dialog.show_all()
@@ -300,27 +296,26 @@ class GUI(object):
             filestat = os.stat(next_filename)
             current = filename
             if stat.S_ISDIR(filestat.st_mode):
-                print next_filename, "is a ddirectory"
+                # print next_filename, "is a ddirectory"
                 # next_filename = self.get_next_tree_row(self)
-                print "current", current
-                print "next", next_filename
+                # print "current", current
+                # print "next", next_filename
+                pass
                 # if next_filename != current:
             elif next_filename.endswith(tuple(audioFormats)):
                 return next_filename
             else:
                 print next_filename, "is not an audio file"
-                print "current", current
-                print "next", next_filename
 
     def toggle_play(self, button, filename, position):
         if position == "current":
-            print "ccurrent", self.get_next_tree_row(self)
+            # print "current", self.get_next_tree_row(self)
+            pass
             # if not self.get_selected_tree_row(self):
                 # return
             if filename:
                 self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
                 self.player(self, filename)
-
             else:
                 filename = self.get_selected_tree_row(self)
                 slider_position =  self.slider.get_value()
@@ -347,7 +342,6 @@ class GUI(object):
             self.buttons_hbox.pack_start(self.label, True)
         else:
             filename = self.get_next_tree_row(self)
-            print "Playing next file :", filename
             self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
             self.player(self, filename)
 
@@ -375,7 +369,6 @@ class GUI(object):
             self.plot_inbox.pack_start(self.pa)
             self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
             self.window.show_all()
-            print "--------------------- playing", filename
 
     def plotter(self, filename, plot_type, plot_style):
         rate, data = wavfile.read(open(filename, 'r'))
