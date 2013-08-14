@@ -180,7 +180,7 @@ class GUI(object):
         # alignment = gtk.Alignment(0.5, 0.5, 0.5, 0.5)
 
         self.label.set_alignment(0,0.5)
-        self.label.set_markup("<b> Plop</b>\n Xx")
+        # self.label.set_markup("<b> Plop</b>\n Xx")
 
         self.slider = gtk.HScale()
 
