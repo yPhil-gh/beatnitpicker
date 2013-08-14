@@ -12,7 +12,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
 import scipy.io.wavfile as wavfile
 
-from numpy import arange, sin, pi
 import matplotlib as plt
 
 
@@ -180,7 +179,7 @@ class GUI(object):
         # alignment = gtk.Alignment(0.5, 0.5, 0.5, 0.5)
 
         self.label.set_alignment(0,0.5)
-        # self.label.set_markup("<b> Plop</b>\n Xx")
+        self.label.set_markup("<b> </b>\n \n ")
 
         self.slider = gtk.HScale()
 
@@ -196,8 +195,8 @@ class GUI(object):
         self.slider.set_range(0, 100)
         self.slider.set_increments(1, 10)
 
-        self.buttons_hbox.pack_start(self.toggle_button, False, True, 0)
-        self.buttons_hbox.pack_start(self.label, False, False, 0)
+        self.buttons_hbox.pack_start(self.toggle_button, False)
+        self.buttons_hbox.pack_start(self.label, False)
 
         # self.buttons_hbox.pack_start(self.next_button, False)
 
@@ -343,7 +342,7 @@ class GUI(object):
             re.search('(?<=abc)def', 'abcdef')
             audio_codec_tag = self.dig_info(filename, "audio-codec")
             self.label.set_markup("<b> " + os.path.basename(filename) + "</b>\n" + audio_codec_tag)
-            self.buttons_hbox.pack_start(self.label, True)
+            # self.buttons_hbox.pack_start(self.label, True)
         else:
             filename = self.get_next_tree_row(self)
             self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
@@ -353,7 +352,7 @@ class GUI(object):
         # self.plot_outbox.remove(self.plot_inbox)
         self.plot_outbox.remove(self.plot_inbox)
 
-        self.buttons_hbox.remove(self.label)
+        # self.buttons_hbox.remove(self.label)
 
         self.playbin.set_state(gst.STATE_READY)
         self.playbin.set_property('uri', 'file:///' + filename)
