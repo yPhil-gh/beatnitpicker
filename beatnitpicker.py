@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
-import os, sys, gobject, stat, time, argparse, re
+import os, sys, gobject, stat, time
 
 import gst, gtk
-gobject.threads_init()
 
 from gst.extend import discoverer
 import gst.pbutils
@@ -11,8 +10,6 @@ import gst.pbutils
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
 import scipy.io.wavfile as wavfile
-
-import matplotlib as plt
 
 
 beatnitpicker_license = """
@@ -398,19 +395,6 @@ class GUI(object):
             a.axhline(0, color='DimGray', lw=1)
             a.set_xticklabels(["", ""])
             a.set_yticklabels(["", ""])
-        else:
-            audio = input_data[1]
-            window = hann(1024)
-            audio = audio[0:1024] * window
-            # fft
-            mags = abs(rfft(audio))
-            # convert to dB
-            mags = 20 * scipy.log10(mags)
-            # normalise to 0 dB
-            mags -= max(mags)
-            plt.plot(mags)
-            plt.ylabel("Magnitude (dB)")
-            plt.xlabel("Frequency Bin")
         if plot_style == "neat":
             f.subplots_adjust(0, 0, 1, 1)
             a.axis('off')
