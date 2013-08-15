@@ -43,16 +43,6 @@ menu = """
 </ui>
 """
 
-total = len(sys.argv)
-cmdargs = str(sys.argv)
-
-if total > 1:
-    # print ("Args list: %s " % cmdargs)
-    # print ("First argument: %s" % str(sys.argv[1]))
-    file_to_open = str(sys.argv[1])
-    dir_to_open = os.path.dirname(file_to_open)
-    print dir_to_open
-
 class GUI(object):
 
     column_names = ["Name", "Size", "Mode", "Last Changed"]
