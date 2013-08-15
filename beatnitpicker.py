@@ -43,6 +43,15 @@ menu = """
 </ui>
 """
 
+total = len(sys.argv)
+cmdargs = str(sys.argv)
+
+if total > 1:
+    # print ("Args list: %s " % cmdargs)
+    # print ("First argument: %s" % str(sys.argv[1]))
+    file_to_open = str(sys.argv[1])
+    dir_to_open = os.path.dirname(file_to_open)
+    print dir_to_open
 
 class GUI(object):
 
@@ -377,7 +386,10 @@ class GUI(object):
 
     def make_list(self, dname=None):
         if not dname:
-            self.dirname = os.path.expanduser('~')
+            if dir_to_open:
+                self.dirname = dir_to_open
+            else:
+                self.dirname = os.path.expanduser('~')
         else:
             self.dirname = os.path.abspath(dname)
         self.window.set_title("BeatNTPK : " + self.dirname)
