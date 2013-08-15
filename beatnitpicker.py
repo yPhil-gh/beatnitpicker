@@ -73,7 +73,7 @@ class GUI(object):
             text = self.get_info(filename)
         else:
             title = os.path.basename(filename)
-            text = filename, "is not an audio file"
+            text = "##", filename, "is not an audio file"
 
         dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
         dialog.set_title("BeatNitPicker audio file info")
@@ -114,7 +114,7 @@ class GUI(object):
         elif filename.endswith(tuple(self.audioFormats)):
             self.toggle_play(self, filename, "current")
         else:
-            print "# Not an audio file"
+            print "##", filename, "is not an audio file"
 
     def __init__(self, dname = None):
 
@@ -260,7 +260,7 @@ class GUI(object):
             elif filename.endswith(tuple(self.audioFormats)):
                 return filename
             else:
-                print filename, "is not an audio file"
+                print "##", filename, "is not an audio file"
 
     def get_next_tree_row(self, *args):
         treeview = self.treeview
@@ -284,7 +284,7 @@ class GUI(object):
             elif next_filename.endswith(tuple(self.audioFormats)):
                 return next_filename
             else:
-                print next_filename, "is not an audio file"
+                print "##", next_filename, "is not an audio file"
 
     def toggle_play(self, button, filename, position):
         if position == "current":
