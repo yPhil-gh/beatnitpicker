@@ -19,6 +19,7 @@ the Free Software Foundation, version 2.
 
 This program is distributed in the hope that it will be useful,
 GNU General Public License for more details.
+
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA)
@@ -44,57 +45,51 @@ interface = """
 </ui>
 """
 
+
+
 class GUI(object):
 
-    column_names = ['Name', 'Size', 'Mode', 'Last Changed']
+    column_names = ["Name", "Size", "Mode", "Last Changed"]
+    audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
 
-    def get_info(self, filename, style="short"):
-        if style == "full":
-            newitem = gst.pbutils.Discoverer(50000000000)
-            info = newitem.discover_uri("file://" + filename)
-            tags = info.get_tags()
-            mystring = ""
+    def get_info(self, filename, element=None):
+        newitem = gst.pbutils.Discoverer(50000000000)
+        info = newitem.discover_uri("file://" + filename)
+        tags = info.get_tags()
+        mystring = ""
+        if element:
+            for tag_name in tags.keys():
+                if tag_name == element:
+                    mystring += " " + str(tags[tag_name]) + '\r\n'
+                return mystring
+        else:
             for tag_name in tags.keys():
                 if tag_name != "image":
                     mystring += tag_name + " : " + str(tags[tag_name]) + '\r\n'
             return mystring
 
-    def dig_info(self, filename, element):
-        newitem = gst.pbutils.Discoverer(50000000000)
-        info = newitem.discover_uri("file://" + filename)
-        tags = info.get_tags()
-        mystring = ""
-        for tag_name in tags.keys():
-            if tag_name == element:
-                mystring += " " + str(tags[tag_name]) + '\r\n'
-                return mystring
-
     def file_properties_dialog(self, widget):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
-
         filename = self.get_selected_tree_row(self)
-        if filename.endswith(tuple(audioFormats)):
+
+        if filename.endswith(tuple(self.audioFormats)):
             title = os.path.basename(filename)
-            text = self.get_info(filename, style="full")
+            text = self.get_info(filename)
         else:
             title = os.path.basename(filename)
             text = "Not an audio file"
 
         dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
+        dialog.set_title("BeatNitPicker audio file info")
+        dialog.format_secondary_text("Location :" + filename + '\r' + str(text))
+        dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
+        dialog.connect('destroy', lambda w: dialog.destroy())
 
         if filename.endswith(".wav") or filename.endswith(".WAV"):
             pa = self.plotter(filename, "waveform", "full")
             pa.set_size_request(350, 200)
             dialog.vbox.pack_start(pa)
 
-        dialog.set_title("BeatNitPicker audio file info")
-        dialog.format_secondary_text("Location :" + filename + '\r' + str(text))
-
-        dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
         dialog.show_all()
-
-        dialog.connect('destroy', lambda w: dialog.destroy())
-
         dialog.run()
         dialog.destroy()
 
@@ -108,12 +103,10 @@ class GUI(object):
         about.set_logo(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
 
         about.set_license(beatnitpicker_license)
-        # about.set_wrap_license(True)
         about.run()
         about.destroy()
 
     def open_file(self, treeview, path, button, *args):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
         model = treeview.get_model()
         iter = model.get_iter(path)
         filename = os.path.join(self.dirname, model.get_value(iter, 0))
@@ -121,7 +114,7 @@ class GUI(object):
         if stat.S_ISDIR(filestat.st_mode):
             new_model = self.make_list(filename)
             treeview.set_model(new_model)
-        elif filename.endswith(tuple(audioFormats)):
+        elif filename.endswith(tuple(self.audioFormats)):
             self.toggle_play(self, filename, "current")
         else:
             print "# Not an audio file"
@@ -279,7 +272,6 @@ class GUI(object):
 
 
     def get_selected_tree_row(self, *args):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
         treeview = self.treeview
         selection = treeview.get_selection()
         (model, pathlist) = selection.get_selected_rows()
@@ -290,14 +282,12 @@ class GUI(object):
             filestat = os.stat(filename)
             if stat.S_ISDIR(filestat.st_mode):
                 print filename, "is a directory"
-            elif filename.endswith(tuple(audioFormats)):
+            elif filename.endswith(tuple(self.audioFormats)):
                 return filename
             else:
                 print filename, "is not an audio file"
 
     def get_next_tree_row(self, *args):
-        # current = ""
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
         treeview = self.treeview
         selection = treeview.get_selection()
         (model, pathlist) = selection.get_selected_rows()
@@ -316,7 +306,7 @@ class GUI(object):
                 # print "next", next_filename
                 pass
                 # if next_filename != current:
-            elif next_filename.endswith(tuple(audioFormats)):
+            elif next_filename.endswith(tuple(self.audioFormats)):
                 return next_filename
             else:
                 print next_filename, "is not an audio file"
@@ -351,7 +341,7 @@ class GUI(object):
 
             # self.label = gtk.Label()
             re.search('(?<=abc)def', 'abcdef')
-            audio_codec_tag = self.dig_info(filename, "audio-codec")
+            audio_codec_tag = self.get_info(filename, "audio-codec")
             self.label.set_markup("<b> " + os.path.basename(filename) + "</b>\n" + audio_codec_tag)
             # self.buttons_hbox.pack_start(self.label, True)
         else:
@@ -430,12 +420,11 @@ class GUI(object):
         return listmodel
 
     def file_pixbuf(self, column, cell, model, iter):
-        audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV" ]
         filename = os.path.join(self.dirname, model.get_value(iter, 0))
         filestat = os.stat(filename)
         if stat.S_ISDIR(filestat.st_mode):
             pb = gtk.icon_theme_get_default().load_icon("folder", 24, 0)
-        elif filename.endswith(tuple(audioFormats)):
+        elif filename.endswith(tuple(self.audioFormats)):
             pb = gtk.icon_theme_get_default().load_icon("audio-volume-medium", 24, 0)
         else:
             pb = gtk.icon_theme_get_default().load_icon("edit-copy", 24, 0)
