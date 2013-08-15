@@ -56,17 +56,17 @@ class GUI(object):
         newitem = gst.pbutils.Discoverer(50000000000)
         info = newitem.discover_uri("file://" + filename)
         tags = info.get_tags()
-        mystring = ""
+        tag_string = ""
         if element:
             for tag_name in tags.keys():
                 if tag_name == element:
-                    mystring += " " + str(tags[tag_name]) + '\r\n'
-                return mystring
+                    tag_string += " " + str(tags[tag_name]) + '\r\n'
+                return tag_string
         else:
             for tag_name in tags.keys():
                 if tag_name != "image":
-                    mystring += tag_name + " : " + str(tags[tag_name]) + '\r\n'
-            return mystring
+                    tag_string += tag_name + " : " + str(tags[tag_name]) + '\r\n'
+            return tag_string
 
     def file_properties_dialog(self, widget):
         filename = self.get_selected_tree_row(self)
@@ -76,7 +76,7 @@ class GUI(object):
             text = self.get_info(filename)
         else:
             title = os.path.basename(filename)
-            text = "Not an audio file"
+            text = filename, "is not an audio file"
 
         dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
         dialog.set_title("BeatNitPicker audio file info")
@@ -119,9 +119,6 @@ class GUI(object):
         else:
             print "# Not an audio file"
 
-    def cursor_changed(self,w,e=None):
-        self.treeview.grab_focus()
-
     def __init__(self, dname = None):
 
         self.window = gtk.Window()
@@ -135,59 +132,42 @@ class GUI(object):
 
         cell_data_funcs = (None, self.file_size, self.file_mode,
                            self.file_last_changed)
+
         self.listmodel = self.make_list(dname)
-
-
         self.treeview = gtk.TreeView()
 
         # self.treeview.set_enable_search(True)
         self.treeview.set_search_column(0)
-        # self.treeview.connect("cursor-changed", self.cursor_changed)
         self.tvcolumn = [None] * len(self.column_names)
         cellpb = gtk.CellRendererPixbuf()
         self.tvcolumn[0] = gtk.TreeViewColumn(self.column_names[0], cellpb)
         self.tvcolumn[0].set_cell_data_func(cellpb, self.file_pixbuf)
         cell = gtk.CellRendererText()
         self.tvcolumn[0].pack_start(cell, False)
-
-
-
         self.tvcolumn[0].set_cell_data_func(cell, self.file_name)
         self.treeview.append_column(self.tvcolumn[0])
         for n in range(1, len(self.column_names)):
             cell = gtk.CellRendererText()
             self.tvcolumn[n] = gtk.TreeViewColumn(self.column_names[n], cell)
 
-            # set the cell "text" attribute to column 0 - retrieve text
-            # from that column in treestore
-            # self.tvcolumn[n].add_attribute(cell, 'text', 0)
-
-            # make it searchable
+            # make it searchable (does NOT work, please help)
             self.treeview.set_search_column(0)
 
-            # Allow sorting on the column
+            # Allow sorting on the column (does NOT work, please help)
             self.tvcolumn[n].set_sort_column_id(n)
 
-            # self.tvcolumn[n].set_sort_column_id(n)
             if n == 1:
                 cell.set_property('xalign', 1.0)
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
             self.treeview.append_column(self.tvcolumn[n])
         self.treeview.set_model(self.listmodel)
-        self.treeview.connect("cursor-changed", self.cursor_changed)
-
-        # self.listmodel.set_sort_func(0, self.lister_compare, None)
 
     # player
         self.label = gtk.Label()
-        # alignment = gtk.Alignment(0.5, 0.5, 0.5, 0.5)
-
         self.label.set_alignment(0,0.5)
         self.label.set_markup("<b> </b>\n \n ")
 
         self.slider = gtk.HScale()
-
-        self.toggle_button = gtk.Button()
         self.toggle_button = gtk.ToggleButton(None)
 
         self.next_button = gtk.Button("Next")
@@ -214,14 +194,6 @@ class GUI(object):
         self.is_playing = False
 
     # end player
-
-    # Connects
-        self.toggle_button.connect("toggled", self.toggle_play, None, "current")
-        self.next_button.connect("clicked", self.toggle_play, None, "next")
-        self.slider.connect('value-changed', self.on_slider_change)
-        self.treeview.connect('row-activated', self.open_file)
-
-        self.mainbox = gtk.VBox()
 
     # UI
 
@@ -252,14 +224,20 @@ class GUI(object):
 
         menubar = uimanager.get_widget("/MenuBar")
 
+
+        # Connects
+        self.toggle_button.connect("toggled", self.toggle_play, None, "current")
+        self.next_button.connect("clicked", self.toggle_play, None, "next")
+        self.slider.connect('value-changed', self.on_slider_change)
+        self.treeview.connect('row-activated', self.open_file)
+
         # Packs
-
-        self.mainbox.pack_start(menubar, False)
-
+        self.mainbox = gtk.VBox()
         self.plot_inbox = gtk.HBox(True, 0)
         self.plot_outbox = gtk.VBox(True, 0)
         self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
 
+        self.mainbox.pack_start(menubar, False)
         self.mainbox.pack_start(self.plot_outbox, False, False, 1)
         self.mainbox.pack_start(self.slider_hbox, False, False, 1)
         self.mainbox.pack_start(self.buttons_hbox, False, False, 1)
@@ -339,21 +317,16 @@ class GUI(object):
                         self.player(self, filename)
                         self.is_playing = True
 
-            # self.label = gtk.Label()
             re.search('(?<=abc)def', 'abcdef')
             audio_codec_tag = self.get_info(filename, "audio-codec")
             self.label.set_markup("<b> " + os.path.basename(filename) + "</b>\n" + audio_codec_tag)
-            # self.buttons_hbox.pack_start(self.label, True)
         else:
             filename = self.get_next_tree_row(self)
             self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
             self.player(self, filename)
 
     def player(self, button, filename):
-        # self.plot_outbox.remove(self.plot_inbox)
         self.plot_outbox.remove(self.plot_inbox)
-
-        # self.buttons_hbox.remove(self.label)
 
         self.playbin.set_state(gst.STATE_READY)
         self.playbin.set_property('uri', 'file:///' + filename)
