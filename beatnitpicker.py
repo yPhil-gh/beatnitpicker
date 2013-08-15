@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, gobject, stat, time
+import os, sys, gobject, stat, time, re
 
 import gst, gtk
 
@@ -15,9 +15,10 @@ import scipy.io.wavfile as wavfile
 beatnitpicker_license = """
 BeatNitPicker is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation, version 2.\n\n
+the Free Software Foundation, version 2.
+
 This program is distributed in the hope that it will be useful,
-GNU General Public License for more details.\n\n
+GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA)
