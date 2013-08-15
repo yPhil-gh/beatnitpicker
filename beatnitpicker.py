@@ -1,11 +1,9 @@
 #!/usr/bin/python
 
 import os, sys, gobject, stat, time, re
+import gtk
 
-import gst, gtk
-
-from gst.extend import discoverer
-import gst.pbutils
+import gst, gst.pbutils
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
@@ -44,7 +42,6 @@ interface = """
     </menubar>
 </ui>
 """
-
 
 
 class GUI(object):
