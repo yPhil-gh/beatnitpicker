@@ -376,10 +376,7 @@ class GUI(object):
 
     def make_list(self, dname=None):
         if not dname:
-            if dir_to_open:
-                self.dirname = dir_to_open
-            else:
-                self.dirname = os.path.expanduser('~')
+            self.dirname = os.path.expanduser('~')
         else:
             self.dirname = os.path.abspath(dname)
         self.window.set_title("BeatNTPK : " + self.dirname)
