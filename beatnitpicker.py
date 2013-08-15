@@ -10,7 +10,7 @@ from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanva
 import scipy.io.wavfile as wavfile
 
 
-beatnitpicker_license = """
+license = """
 BeatNitPicker is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, version 2.
@@ -23,7 +23,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA)
 """
 
-interface = """
+menu = """
 <ui>
     <menubar name="MenuBar">
         <menu action="File">
@@ -99,7 +99,7 @@ class GUI(object):
         about.set_website("https://github.com/xaccrocheur")
         about.set_logo(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
 
-        about.set_license(beatnitpicker_license)
+        about.set_license(license)
         about.run()
         about.destroy()
 
@@ -217,7 +217,7 @@ class GUI(object):
         ])
 
         uimanager.insert_action_group(self.actiongroup, 0)
-        uimanager.add_ui_from_string(interface)
+        uimanager.add_ui_from_string(menu)
 
         menubar = uimanager.get_widget("/MenuBar")
 
