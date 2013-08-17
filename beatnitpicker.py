@@ -372,14 +372,18 @@ class GUI(object):
             self.window.show_all()
 
     def plotter(self, filename, plot_type, plot_style):
+
         rate, data = wavfile.read(open(filename, 'r'))
+
         f = Figure(facecolor = 'w')
         f.patch.set_alpha(1)
         a = f.add_subplot(111, axisbg='w')
-        # a.patch.set_alpha(0.5)
 
         if plot_type == "waveform":
-            a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
+            try:
+                a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
+            except:
+                print "## wavfile NOT OK"
             a.axhline(0, color='DimGray', lw=1)
             a.set_xticklabels(["", ""])
             a.set_yticklabels(["", ""])
