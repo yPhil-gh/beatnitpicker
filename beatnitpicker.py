@@ -9,7 +9,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
 import scipy.io.wavfile as wavfile
 
-
 license = """
 BeatNitPicker is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
