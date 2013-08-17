@@ -140,10 +140,11 @@ class GUI(object):
             dir_to_open = os.path.dirname(file_to_open)
             print dir_to_open
             self.listmodel = self.make_list(dname, dir_to_open)
+            print "# Yep, opening", dir_to_open
         else:
             self.listmodel = self.make_list(dname)
+            print "# Nope, nutting"
             dir_to_open = None
-
 
 
         # self.treeview.set_enable_search(True)
@@ -201,11 +202,6 @@ class GUI(object):
         self.bus.add_signal_watch()
         self.bus.connect("message::eos", self.on_finish)
 
-        if dir_to_open:
-            self.player(self, file_to_open)
-        else:
-            self.is_playing = False
-
     # end player
 
     # UI
@@ -258,7 +254,14 @@ class GUI(object):
 
         self.window.add(self.mainbox)
         self.window.show_all()
-        self.treeview.grab_focus()
+        # self.treeview.grab_focus()
+
+        if dir_to_open:
+            self.player(self, file_to_open)
+        else:
+            self.is_playing = False
+
+        print "## End init"
         return
 
 
@@ -393,11 +396,7 @@ class GUI(object):
 
     def make_list(self, dir_to_open, dname=None):
         if not dname:
-            if dir_to_open:
-                print "plop"
-                self.dirname = dir_to_open
-            else:
-                self.dirname = os.path.expanduser('~')
+            self.dirname = os.path.expanduser('~')
         else:
             self.dirname = os.path.abspath(dname)
         self.window.set_title("BeatNTPK : " + self.dirname)
