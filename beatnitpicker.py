@@ -265,7 +265,6 @@ class GUI(object):
 
         if dir_to_open:
             self.toggle_play(self, file_to_open, "current")
-            # self.player(self, file_to_open)
             self.init = True
         else:
             self.is_playing = False
