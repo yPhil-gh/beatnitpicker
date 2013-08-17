@@ -264,7 +264,9 @@ class GUI(object):
         self.window.show_all()
 
         if dir_to_open:
-            self.player(self, file_to_open)
+            self.toggle_play(self, file_to_open, "current")
+            # self.player(self, file_to_open)
+            self.init = True
         else:
             self.is_playing = False
 
@@ -349,7 +351,7 @@ class GUI(object):
             self.player(self, filename)
 
     def player(self, button, filename):
-        # self.plot_outbox.remove(self.plot_inbox)
+        self.plot_outbox.remove(self.plot_inbox)
 
         self.playbin.set_state(gst.STATE_READY)
         self.playbin.set_property('uri', 'file:///' + filename)
