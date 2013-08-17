@@ -156,15 +156,18 @@ class GUI(object):
         self.tvcolumn[0].pack_start(cell, False)
         self.tvcolumn[0].set_cell_data_func(cell, self.file_name)
         self.treeview.append_column(self.tvcolumn[0])
+
+        # Allow sorting on the column (does NOT work, please help)
+        self.tvcolumn[0].set_sort_column_id(0)
+        # self.tvcolumn[1].set_sort_column_id(1)
+        # make it searchable (does NOT work, please help)
+        self.treeview.set_search_column(0)
+
         for n in range(1, len(self.column_names)):
             cell = gtk.CellRendererText()
             self.tvcolumn[n] = gtk.TreeViewColumn(self.column_names[n], cell)
 
-            # make it searchable (does NOT work, please help)
-            self.treeview.set_search_column(0)
 
-            # Allow sorting on the column (does NOT work, please help)
-            self.tvcolumn[n].set_sort_column_id(n)
 
             if n == 1:
                 cell.set_property('xalign', 1.0)
@@ -408,7 +411,7 @@ class GUI(object):
         files = [f for f in os.listdir(self.dirname) if f[0] != '.']
         files.sort()
         files = ['..'] + files
-        listmodel = gtk.ListStore(object)
+        listmodel = gtk.ListStore(str)
         for f in files:
             listmodel.append([f])
         return listmodel
