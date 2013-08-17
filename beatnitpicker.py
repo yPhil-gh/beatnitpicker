@@ -46,7 +46,7 @@ menu = """
 class GUI(object):
 
     column_names = ["Name", "Size", "Mode", "Last Changed"]
-    audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
+    audio_formats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
 
     def get_info(self, filename, element=None):
         newitem = gst.pbutils.Discoverer(50000000000)
@@ -67,7 +67,7 @@ class GUI(object):
     def file_properties_dialog(self, widget):
         filename = self.get_selected_tree_row(self)
 
-        if filename.endswith(tuple(self.audioFormats)):
+        if filename.endswith(tuple(self.audio_formats)):
             title = os.path.basename(filename)
             text = self.get_info(filename)
         else:
@@ -110,15 +110,21 @@ class GUI(object):
         if stat.S_ISDIR(filestat.st_mode):
             new_model = self.make_list(filename)
             treeview.set_model(new_model)
-        elif filename.endswith(tuple(self.audioFormats)):
+        elif filename.endswith(tuple(self.audio_formats)):
             self.toggle_play(self, filename, "current")
         else:
             print "##", filename, "is not an audio file"
 
-    def __init__(self, dname = None):
+    sortOrder   = gtk.SORT_ASCENDING
+    lastSortCol = None
 
-        total = len(sys.argv)
-        cmdargs = str(sys.argv)
+    def sortRows(self, column):
+
+        rows = [tuple(r) + (i,) for i, r in enumerate(self.listmodel)]
+        rows.sort()
+        self.listmodel.reorder([r[-1] for r in rows])
+
+    def __init__(self, dname = None):
 
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
@@ -130,20 +136,19 @@ class GUI(object):
 
     # lister
 
-        cell_data_funcs = (None, self.file_size, self.file_mode,
-                           self.file_last_changed)
+        cell_data_funcs = (None, self.file_size, self.file_mode, self.file_last_changed)
+
+        total = len(sys.argv)
+        cmdargs = str(sys.argv)
 
         self.treeview = gtk.TreeView()
 
         if total > 1:
             file_to_open = str(sys.argv[1])
             dir_to_open = os.path.dirname(file_to_open)
-            print dir_to_open
             self.listmodel = self.make_list(dname, dir_to_open)
-            print "# Yep, opening", dir_to_open
         else:
             self.listmodel = self.make_list(dname)
-            print "# Nope, nutting"
             dir_to_open = None
 
         # self.treeview.set_enable_search(True)
@@ -157,22 +162,22 @@ class GUI(object):
         self.tvcolumn[0].set_cell_data_func(cell, self.file_name)
         self.treeview.append_column(self.tvcolumn[0])
 
-        # Allow sorting on the column (does NOT work, please help)
-        self.tvcolumn[0].set_sort_column_id(0)
-        # self.tvcolumn[1].set_sort_column_id(1)
-        # make it searchable (does NOT work, please help)
+
         self.treeview.set_search_column(0)
+        self.tvcolumn[0].set_sort_column_id(0)
 
         for n in range(1, len(self.column_names)):
             cell = gtk.CellRendererText()
             self.tvcolumn[n] = gtk.TreeViewColumn(self.column_names[n], cell)
-
-
-
+            # self.tvcolumn[n].set_clickable(True)
+            # self.tvcolumn[n].connect('clicked', self.sortRows)
             if n == 1:
                 cell.set_property('xalign', 1.0)
+            # self.tvcolumn[n].set_sort_column_id(n)
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
             self.treeview.append_column(self.tvcolumn[n])
+
+        # self.listmodel.set_sort_func(0, self.lister_compare, None)
         self.treeview.set_model(self.listmodel)
 
     # player
@@ -278,7 +283,7 @@ class GUI(object):
             filestat = os.stat(filename)
             if stat.S_ISDIR(filestat.st_mode):
                 print filename, "is a directory"
-            elif filename.endswith(tuple(self.audioFormats)):
+            elif filename.endswith(tuple(self.audio_formats)):
                 return filename
             else:
                 print "##", filename, "is not an audio file"
@@ -302,7 +307,7 @@ class GUI(object):
                 # print "next", next_filename
                 pass
                 # if next_filename != current:
-            elif next_filename.endswith(tuple(self.audioFormats)):
+            elif next_filename.endswith(tuple(self.audio_formats)):
                 return next_filename
             else:
                 print "##", next_filename, "is not an audio file"
@@ -369,7 +374,6 @@ class GUI(object):
 
         rate, data = wavfile.read(open(filename, 'r'))
 
-
         f = Figure(facecolor = 'w')
         f.patch.set_alpha(1)
         a = f.add_subplot(111, axisbg='w')
@@ -421,7 +425,7 @@ class GUI(object):
         filestat = os.stat(filename)
         if stat.S_ISDIR(filestat.st_mode):
             pb = gtk.icon_theme_get_default().load_icon("folder", 24, 0)
-        elif filename.endswith(tuple(self.audioFormats)):
+        elif filename.endswith(tuple(self.audio_formats)):
             pb = gtk.icon_theme_get_default().load_icon("audio-volume-medium", 24, 0)
         else:
             pb = gtk.icon_theme_get_default().load_icon("edit-copy", 24, 0)
