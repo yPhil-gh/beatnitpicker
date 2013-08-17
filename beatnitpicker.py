@@ -43,15 +43,6 @@ menu = """
 </ui>
 """
 
-total = len(sys.argv)
-cmdargs = str(sys.argv)
-
-if total > 1:
-    # print ("Args list: %s " % cmdargs)
-    # print ("First argument: %s" % str(sys.argv[1]))
-    file_to_open = str(sys.argv[1])
-    dir_to_open = os.path.dirname(file_to_open)
-    print dir_to_open
 
 class GUI(object):
 
@@ -127,6 +118,16 @@ class GUI(object):
 
     def __init__(self, dname = None):
 
+        total = len(sys.argv)
+        cmdargs = str(sys.argv)
+
+        if total > 1:
+            # print ("Args list: %s " % cmdargs)
+            # print ("First argument: %s" % str(sys.argv[1]))
+            file_to_open = str(sys.argv[1])
+            dir_to_open = os.path.dirname(file_to_open)
+            print dir_to_open
+
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
         self.window.connect("delete_event", self.on_destroy)
@@ -197,7 +198,10 @@ class GUI(object):
         self.bus.add_signal_watch()
         self.bus.connect("message::eos", self.on_finish)
 
-        self.is_playing = False
+        if dir_to_open:
+            self.player(self, file_to_open)
+        else:
+            self.is_playing = False
 
     # end player
 
@@ -332,7 +336,7 @@ class GUI(object):
             self.player(self, filename)
 
     def player(self, button, filename):
-        self.plot_outbox.remove(self.plot_inbox)
+        # self.plot_outbox.remove(self.plot_inbox)
 
         self.playbin.set_state(gst.STATE_READY)
         self.playbin.set_property('uri', 'file:///' + filename)
@@ -384,9 +388,10 @@ class GUI(object):
         else:
             return 1
 
-    def make_list(self, dname=None):
+    def make_list(self, dir_to_open, dname=None):
         if not dname:
             if dir_to_open:
+                print "plop"
                 self.dirname = dir_to_open
             else:
                 self.dirname = os.path.expanduser('~')
