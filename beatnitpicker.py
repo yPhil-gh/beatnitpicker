@@ -155,7 +155,6 @@ class GUI(object):
             print "# Nope, nutting"
             dir_to_open = None
 
-
         # self.treeview.set_enable_search(True)
         self.treeview.set_search_column(0)
         self.tvcolumn = [None] * len(self.column_names)
