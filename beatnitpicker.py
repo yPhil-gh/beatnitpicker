@@ -52,7 +52,6 @@ if total > 1:
     dir_to_open = os.path.dirname(file_to_open)
     print dir_to_open
 
->>>>>>> ae5125a7b24fb4156be56787255d158e8c504ce4
 class GUI(object):
 
     column_names = ["Name", "Size", "Mode", "Last Changed"]
