@@ -254,7 +254,7 @@ class GUI(object):
 
         self.window.add(self.mainbox)
         self.window.show_all()
-        # self.treeview.grab_focus()
+        self.treeview.grab_focus()
 
         if dir_to_open:
             self.player(self, file_to_open)
