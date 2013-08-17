@@ -128,6 +128,7 @@ class GUI(object):
 
         self.mydname = dname
 
+
     # lister
 
         cell_data_funcs = (None, self.file_size, self.file_mode,
