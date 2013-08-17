@@ -42,7 +42,6 @@ menu = """
 </ui>
 """
 
-
 class GUI(object):
 
     column_names = ["Name", "Size", "Mode", "Last Changed"]
