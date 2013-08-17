@@ -375,6 +375,7 @@ class GUI(object):
 
         rate, data = wavfile.read(open(filename, 'r'))
 
+
         f = Figure(facecolor = 'w')
         f.patch.set_alpha(1)
         a = f.add_subplot(111, axisbg='w')
@@ -384,6 +385,7 @@ class GUI(object):
                 a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
             except:
                 print "## wavfile NOT OK"
+
             a.axhline(0, color='DimGray', lw=1)
             a.set_xticklabels(["", ""])
             a.set_yticklabels(["", ""])
