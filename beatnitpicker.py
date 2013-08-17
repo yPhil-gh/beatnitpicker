@@ -264,7 +264,6 @@ class GUI(object):
         print "## End init"
         return
 
-
     def get_selected_tree_row(self, *args):
         treeview = self.treeview
         selection = treeview.get_selection()
