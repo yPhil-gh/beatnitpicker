@@ -121,13 +121,6 @@ class GUI(object):
         total = len(sys.argv)
         cmdargs = str(sys.argv)
 
-        if total > 1:
-            # print ("Args list: %s " % cmdargs)
-            # print ("First argument: %s" % str(sys.argv[1]))
-            file_to_open = str(sys.argv[1])
-            dir_to_open = os.path.dirname(file_to_open)
-            print dir_to_open
-
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
         self.window.connect("delete_event", self.on_destroy)
@@ -140,8 +133,18 @@ class GUI(object):
         cell_data_funcs = (None, self.file_size, self.file_mode,
                            self.file_last_changed)
 
-        self.listmodel = self.make_list(dname)
         self.treeview = gtk.TreeView()
+
+        if total > 1:
+            file_to_open = str(sys.argv[1])
+            dir_to_open = os.path.dirname(file_to_open)
+            print dir_to_open
+            self.listmodel = self.make_list(dname, dir_to_open)
+        else:
+            self.listmodel = self.make_list(dname)
+            dir_to_open = None
+
+
 
         # self.treeview.set_enable_search(True)
         self.treeview.set_search_column(0)
