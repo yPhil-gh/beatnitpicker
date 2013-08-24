@@ -303,30 +303,32 @@ class GUI(object):
                 print "##", next_filename, "is not an audio file"
 
     def toggle_play(self, button, filename, position):
+        IMAGE_PLAY = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON)
+        IMAGE_PAUSE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON)
         if position == "current":
             # print "current", self.get_next_tree_row(self)
             pass
             # if not self.get_selected_tree_row(self):
                 # return
             if filename:
-                self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+                self.toggle_button.set_property("image", IMAGE_PAUSE)
                 self.player(self, filename)
             else:
                 filename = self.get_selected_tree_row(self)
                 slider_position =  self.slider.get_value()
 
                 if self.is_playing:
-                    self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+                    self.toggle_button.set_property("image", IMAGE_PLAY)
                     self.is_playing = False
                     self.playbin.set_state(gst.STATE_PAUSED)
                 else:
                     if slider_position > 0.0:
-                        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+                        self.toggle_button.set_property("image", IMAGE_PAUSE)
                         self.playbin.set_state(gst.STATE_PLAYING)
                         gobject.timeout_add(100, self.update_slider)
                         self.is_playing = True
                     else:
-                        self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+                        self.toggle_button.set_property("image", IMAGE_PAUSE)
                         self.player(self, filename)
                         self.is_playing = True
 
@@ -335,7 +337,7 @@ class GUI(object):
             self.label.set_markup("<b> " + os.path.basename(filename) + "</b>\n" + audio_codec_tag)
         else:
             filename = self.get_next_tree_row(self)
-            self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+            self.toggle_button.set_property("image", IMAGE_PAUSE)
             self.player(self, filename)
 
     def player(self, button, filename):
