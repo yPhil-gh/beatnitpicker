@@ -303,13 +303,9 @@ class GUI(object):
                 print "##", next_filename, "is not an audio file"
 
     def toggle_play(self, button, filename, position):
-        IMAGE_PLAY = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON)
-        IMAGE_PAUSE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON)
+        IMAGE_PLAY = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON)
+        IMAGE_PAUSE = gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_BUTTON)
         if position == "current":
-            # print "current", self.get_next_tree_row(self)
-            pass
-            # if not self.get_selected_tree_row(self):
-                # return
             if filename:
                 self.toggle_button.set_property("image", IMAGE_PAUSE)
                 self.player(self, filename)
