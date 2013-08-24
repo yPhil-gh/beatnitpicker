@@ -115,15 +115,6 @@ class GUI(object):
         else:
             print "##", filename, "is not an audio file"
 
-    sortOrder   = gtk.SORT_ASCENDING
-    lastSortCol = None
-
-    def sortRows(self, column):
-
-        rows = [tuple(r) + (i,) for i, r in enumerate(self.listmodel)]
-        rows.sort()
-        self.listmodel.reorder([r[-1] for r in rows])
-
     def __init__(self, dname = None):
 
         self.window = gtk.Window()
@@ -151,8 +142,6 @@ class GUI(object):
             self.listmodel = self.make_list(dname)
             dir_to_open = None
 
-        # self.treeview.set_enable_search(True)
-        self.treeview.set_search_column(0)
         self.tvcolumn = [None] * len(self.column_names)
         cellpb = gtk.CellRendererPixbuf()
         self.tvcolumn[0] = gtk.TreeViewColumn(self.column_names[0], cellpb)
@@ -162,23 +151,24 @@ class GUI(object):
         self.tvcolumn[0].set_cell_data_func(cell, self.file_name)
         self.treeview.append_column(self.tvcolumn[0])
 
-
         self.treeview.set_search_column(0)
         self.tvcolumn[0].set_sort_column_id(0)
+
+    # column_names = ["Name", "Size", "Mode", "Last Changed"]
 
         for n in range(1, len(self.column_names)):
             cell = gtk.CellRendererText()
             self.tvcolumn[n] = gtk.TreeViewColumn(self.column_names[n], cell)
-            # self.tvcolumn[n].set_clickable(True)
-            # self.tvcolumn[n].connect('clicked', self.sortRows)
             if n == 1:
                 cell.set_property('xalign', 1.0)
-            # self.tvcolumn[n].set_sort_column_id(n)
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
             self.treeview.append_column(self.tvcolumn[n])
+            # self.tvcolumn[n].set_sort_column_id(n)
 
         # self.listmodel.set_sort_func(0, self.lister_compare, None)
         self.treeview.set_model(self.listmodel)
+        self.tvcolumn[1].set_sort_column_id(1)
+        self.listmodel.set_sort_column_id(0, gtk.SORT_ASCENDING)
 
     # player
         self.label = gtk.Label()
