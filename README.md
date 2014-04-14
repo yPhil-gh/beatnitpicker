@@ -3,7 +3,7 @@ beatnitpicker
 
 A simple audio sample player / auditor
 
-## Dependancies
+### Dependancies
 
 - python-scipy 
 - python-matplotlib 
