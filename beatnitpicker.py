@@ -43,7 +43,10 @@ menu = """
 </ui>
 """
 
+clipath = str(sys.argv[1])
+
 class GUI(object):
+
 
     column_names = ["Name", "Size", "Mode", "Last Changed"]
     audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
@@ -54,12 +57,12 @@ class GUI(object):
         tags = info.get_tags()
         tag_string = ""
         if element:
-            for tag_name in tags.keys():
+            for tag_name in list(tags.keys()):
                 if tag_name == element:
                     tag_string += " " + str(tags[tag_name]) + '\r\n'
                 return tag_string
         else:
-            for tag_name in tags.keys():
+            for tag_name in list(tags.keys()):
                 if tag_name != "image":
                     tag_string += tag_name + " : " + str(tags[tag_name]) + '\r\n'
             return tag_string
@@ -103,19 +106,35 @@ class GUI(object):
         about.destroy()
 
     def open_file(self, treeview, path, button, *args):
+
+        # if clipath:
+        #     filename = os.path.join(clipath)
+        #     # dirpath = clipath
+        # else:
+        #     filename = os.path.join(self.dirname, model.get_value(iter, 0))
+        #     # dirpath = self.dirname
+
         model = treeview.get_model()
         iter = model.get_iter(path)
         filename = os.path.join(self.dirname, model.get_value(iter, 0))
         filestat = os.stat(filename)
+
+        print "path: ", path
+
         if stat.S_ISDIR(filestat.st_mode):
             new_model = self.make_list(filename)
             treeview.set_model(new_model)
         elif filename.endswith(tuple(self.audioFormats)):
             self.toggle_play(self, filename, "current")
         else:
-            print "##", filename, "is not an audio file"
+            print("##", filename, "is not an audio file")
 
     def __init__(self, dname = None):
+
+        if clipath:
+            dname = clipath
+        else:
+            dname = None
 
         self.window = gtk.Window()
         self.window.set_size_request(300, 600)
@@ -166,9 +185,10 @@ class GUI(object):
         self.slider = gtk.HScale()
         self.toggle_button = gtk.ToggleButton(None)
 
-        self.next_button = gtk.Button("Next")
+        self.next_button = gtk.Button(None)
 
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_BUTTON))
+        self.next_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_NEXT, gtk.ICON_SIZE_BUTTON))
 
         self.buttons_hbox = gtk.HBox(False, 5)
         self.slider_hbox = gtk.HBox()
@@ -178,7 +198,7 @@ class GUI(object):
         self.buttons_hbox.pack_start(self.toggle_button, False)
         self.buttons_hbox.pack_start(self.label, False)
 
-        # self.buttons_hbox.pack_start(self.next_button, False)
+        self.buttons_hbox.pack_start(self.next_button, False)
 
         self.slider_hbox.pack_start(self.slider, True, True)
 
@@ -255,11 +275,11 @@ class GUI(object):
             filename = os.path.join(self.dirname, model.get_value(iter, 0))
             filestat = os.stat(filename)
             if stat.S_ISDIR(filestat.st_mode):
-                print filename, "is a directory"
+                print(filename, "is a directory")
             elif filename.endswith(tuple(self.audioFormats)):
                 return filename
             else:
-                print "##", filename, "is not an audio file"
+                print("##", filename, "is not an audio file")
 
     def get_next_tree_row(self, *args):
         treeview = self.treeview
@@ -283,7 +303,7 @@ class GUI(object):
             elif next_filename.endswith(tuple(self.audioFormats)):
                 return next_filename
             else:
-                print "##", next_filename, "is not an audio file"
+                print("##", next_filename, "is not an audio file")
 
     def toggle_play(self, button, filename, position):
         if position == "current":
@@ -337,7 +357,6 @@ class GUI(object):
             self.pa = self.plotter(filename, "waveform", "neat")
             self.pa.set_size_request(200, 60)
 
-
             self.plot_inbox = gtk.HBox()
             self.plot_inbox.pack_start(self.pa)
             self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
@@ -351,7 +370,7 @@ class GUI(object):
         # a.patch.set_alpha(0.5)
 
         if plot_type == "waveform":
-            a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
+            a.plot(list(range(len(data))),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
             a.axhline(0, color='DimGray', lw=1)
             a.set_xticklabels(["", ""])
             a.set_yticklabels(["", ""])
@@ -431,6 +450,7 @@ class GUI(object):
         self.playbin.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, 0)
         self.slider.set_value(0)
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
+        # self.get_next_tree_row(self)
 
     def on_destroy(self, *args):
         self.playbin.set_state(gst.STATE_NULL)

@@ -1,0 +1,58 @@
+--- beatnitpicker.py	(original)
++++ beatnitpicker.py	(refactored)
+@@ -54,12 +54,12 @@
+         tags = info.get_tags()
+         tag_string = ""
+         if element:
+-            for tag_name in tags.keys():
++            for tag_name in list(tags.keys()):
+                 if tag_name == element:
+                     tag_string += " " + str(tags[tag_name]) + '\r\n'
+                 return tag_string
+         else:
+-            for tag_name in tags.keys():
++            for tag_name in list(tags.keys()):
+                 if tag_name != "image":
+                     tag_string += tag_name + " : " + str(tags[tag_name]) + '\r\n'
+             return tag_string
+@@ -113,7 +113,7 @@
+         elif filename.endswith(tuple(self.audioFormats)):
+             self.toggle_play(self, filename, "current")
+         else:
+-            print "##", filename, "is not an audio file"
++            print("##", filename, "is not an audio file")
+ 
+     def __init__(self, dname = None):
+ 
+@@ -255,11 +255,11 @@
+             filename = os.path.join(self.dirname, model.get_value(iter, 0))
+             filestat = os.stat(filename)
+             if stat.S_ISDIR(filestat.st_mode):
+-                print filename, "is a directory"
++                print(filename, "is a directory")
+             elif filename.endswith(tuple(self.audioFormats)):
+                 return filename
+             else:
+-                print "##", filename, "is not an audio file"
++                print("##", filename, "is not an audio file")
+ 
+     def get_next_tree_row(self, *args):
+         treeview = self.treeview
+@@ -283,7 +283,7 @@
+             elif next_filename.endswith(tuple(self.audioFormats)):
+                 return next_filename
+             else:
+-                print "##", next_filename, "is not an audio file"
++                print("##", next_filename, "is not an audio file")
+ 
+     def toggle_play(self, button, filename, position):
+         if position == "current":
+@@ -351,7 +351,7 @@
+         # a.patch.set_alpha(0.5)
+ 
+         if plot_type == "waveform":
+-            a.plot(range(len(data)),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
++            a.plot(list(range(len(data))),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
+             a.axhline(0, color='DimGray', lw=1)
+             a.set_xticklabels(["", ""])
+             a.set_yticklabels(["", ""])
