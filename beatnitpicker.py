@@ -259,7 +259,7 @@ class GUI(object):
         for path in pathlist :
             tree_iter = model.get_iter(path)
             value = model.get_value(tree_iter,0)
-            print value
+            print value, " and iter is ", tree_iter
 
     def get_selected_tree_row(self, *args):
         treeview = self.treeview
