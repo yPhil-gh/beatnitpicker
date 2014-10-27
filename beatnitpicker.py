@@ -1,14 +1,17 @@
 #!/usr/bin/python
 
-import os, sys, gobject, stat, time, re
-import gtk
+import os, sys, stat, time, re
 
-import gst, gst.pbutils
+print("Python interpreter:")
+print(sys.version)
 
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
-import scipy.io.wavfile as wavfile
+from gi.repository import Gtk as gtk
 
+from gi.repository import Gst
+
+# from matplotlib.figure import Figure
+# from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
+# import scipy.io.wavfile as wavfile
 
 license = """
 BeatNitPicker is free software; you can redistribute it and/or modify
@@ -229,7 +232,7 @@ class GUI(object):
         dialog.connect('destroy', lambda w: dialog.destroy())
 
         if filename.endswith(".wav") or filename.endswith(".WAV"):
-            pa = self.plotter(filename, "waveform", "full")
+            # pa = self.plotter(filename, "waveform", "full")
             pa.set_size_request(350, 200)
             dialog.vbox.pack_start(pa)
 
@@ -263,11 +266,6 @@ class GUI(object):
             self.toggle_play(self, filename, "current", None, None)
         else:
             print("##", filename, "is not an audio file")
-
-    def onSelectionChanged(self, bidule = None) :
-        model, treeiter = self.tree_selection.get_selected()
-        if treeiter != None:
-            print "You selected", model[treeiter][0]
 
     def get_selected_tree_row(self, *args):
         treeview = self.treeview
@@ -331,7 +329,7 @@ class GUI(object):
                     if slider_position > 0.0:
                         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
                         self.playbin.set_state(gst.STATE_PLAYING)
-                        gobject.timeout_add(100, self.update_slider)
+                        # gobject.timeout_add(100, self.update_slider)
                         self.is_playing = True
                     else:
                         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
@@ -361,16 +359,19 @@ class GUI(object):
         self.playbin.set_property('uri', 'file:///' + filename)
         self.is_playing = True
         self.playbin.set_state(gst.STATE_PLAYING)
-        gobject.timeout_add(100, self.update_slider)
+        # gobject.timeout_add(100, self.update_slider)
 
         self.vp = gtk.Viewport()
         self.plot_inbox = gtk.HBox()
 
+        self.lab = gtk.Label("No viz")
+        self.plot_inbox.pack_start(self.lab, True, True, 0)
+
         if filename.endswith(".wav") or filename.endswith(".WAV"):
-
+            self.plot_inbox.remove(self.lab)
             self.pa = self.plotter(filename, "waveform", "neat")
-
             self.plot_inbox.pack_start(self.pa)
+
         # self.plot_inbox.set_size_request(200, 60)
         self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
         self.plot_outbox.set_size_request(200, 60)
@@ -378,6 +379,20 @@ class GUI(object):
 
     def plotter(self, filename, plot_type, plot_style):
         rate, data = wavfile.read(open(filename, 'r'))
+
+        # if wavfile.read(open(filename, 'r')):
+        #     print "Rate OK"
+        # else:
+        #     print "Rate NOT OK"
+
+        try:
+            fs, sig = wavfile.read(filename)
+        except:
+            print("Rate NOT OK")
+        else:
+            print("Surprisingly, it seems to work!")
+
+
         f = Figure(facecolor = 'w')
         f.patch.set_alpha(1)
         a = f.add_subplot(111, axisbg='w')
@@ -465,7 +480,7 @@ class GUI(object):
         self.slider.set_value(0)
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
         # self.get_next_tree_row(self)
-        print "finished!"
+        print("finished!")
         # self.toggle_play(self, None, "next")
 
     def on_destroy(self, *args):
