@@ -446,21 +446,12 @@ class GUI(object):
             readable = False
             raise
 
-        # if wavfile.read(open(filename, 'r')):
-        #     readable = True
-        #     print("OK Kool")
-        # else:
-        #     print("NOT Kool")
-
         if readable:
-            print("OK YOOOW")
             self.pa = self.plotter(filename, "waveform", "neat")
             self.plot_inbox.pack_start(self.pa)
         else:
-            print("NOYO")
             self.plot_inbox.pack_start(self.mylabel)
 
-        # self.plot_inbox.set_size_request(200, 60)
         self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
         self.plot_outbox.set_size_request(200, 60)
         self.window.show_all()
@@ -472,7 +463,6 @@ class GUI(object):
         f = Figure(facecolor = 'w')
         f.patch.set_alpha(1)
         a = f.add_subplot(111, axisbg='w')
-        # a.patch.set_alpha(0.5)
 
         if plot_type == "waveform":
             a.plot(list(range(len(data))),data, color="OrangeRed",  linewidth=0.5, linestyle="-")
@@ -483,8 +473,6 @@ class GUI(object):
             f.subplots_adjust(0, 0, 1, 1)
             a.axis('off')
         canvas = FigureCanvas(f)  # a gtk.DrawingArea
-
-
         return canvas
 
     # Lister funcs
