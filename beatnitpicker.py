@@ -362,18 +362,19 @@ class GUI(object):
         self.is_playing = True
         self.playbin.set_state(gst.STATE_PLAYING)
         gobject.timeout_add(100, self.update_slider)
+
+        self.vp = gtk.Viewport()
+        self.plot_inbox = gtk.HBox()
+
         if filename.endswith(".wav") or filename.endswith(".WAV"):
 
-            self.vp = gtk.Viewport()
-            self.sw = gtk.ScrolledWindow()
-            self.vp.set_size_request(200, 200)
             self.pa = self.plotter(filename, "waveform", "neat")
-            self.pa.set_size_request(200, 60)
 
-            self.plot_inbox = gtk.HBox()
             self.plot_inbox.pack_start(self.pa)
-            self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
-            self.window.show_all()
+        # self.plot_inbox.set_size_request(200, 60)
+        self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
+        self.plot_outbox.set_size_request(200, 60)
+        self.window.show_all()
 
     def plotter(self, filename, plot_type, plot_style):
         rate, data = wavfile.read(open(filename, 'r'))
