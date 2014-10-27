@@ -130,7 +130,6 @@ class GUI(object):
         self.window.set_size_request(300, 600)
         self.window.connect("delete_event", self.on_destroy)
         self.window.set_icon(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
-        self.mydname = dname
 
     # lister
 
@@ -140,8 +139,11 @@ class GUI(object):
         self.listmodel = self.make_list(dname)
         self.treeview = gtk.TreeView()
 
-        # self.treeview.set_enable_search(True)
+        self.treeview.set_enable_search(True)
         self.treeview.set_search_column(0)
+
+        # self.treeview.set_activate_on_single_click(True)
+
         self.tvcolumn = [None] * len(self.column_names)
         cellpb = gtk.CellRendererPixbuf()
         self.tvcolumn[0] = gtk.TreeViewColumn(self.column_names[0], cellpb)
@@ -154,8 +156,9 @@ class GUI(object):
             cell = gtk.CellRendererText()
             self.tvcolumn[n] = gtk.TreeViewColumn(self.column_names[n], cell)
 
+
             # make it searchable (does NOT work, please help)
-            self.treeview.set_search_column(0)
+            # self.treeview.set_search_column(True)
 
             # Allow sorting on the column (does NOT work, please help)
             self.tvcolumn[n].set_sort_column_id(n)
@@ -167,8 +170,8 @@ class GUI(object):
         self.treeview.set_model(self.listmodel)
 
         self.tree_selection = self.treeview.get_selection()
-        self.tree_selection.set_mode(gtk.SELECTION_MULTIPLE)
-        self.tree_selection.connect("changed", self.onSelectionChanged)
+        self.tree_selection.set_mode(gtk.SELECTION_SINGLE)
+        # self.tree_selection.connect("changed", self.open_file)
 
     # player
         self.label = gtk.Label()
@@ -236,6 +239,7 @@ class GUI(object):
         self.next_button.connect("clicked", self.toggle_play, None, "next")
         self.slider.connect('value-changed', self.on_slider_change)
         self.treeview.connect('row-activated', self.open_file)
+        self.treeview.connect("cursor-changed", self.toggle_play, None, "current")
 
         # Packs
         self.mainbox = gtk.VBox()
@@ -255,11 +259,9 @@ class GUI(object):
         return
 
     def onSelectionChanged(self, bidule = None) :
-        (model, pathlist) = self.tree_selection.get_selected_rows()
-        for path in pathlist :
-            tree_iter = model.get_iter(path)
-            value = model.get_value(tree_iter,0)
-            print value, " and iter is ", tree_iter
+        model, treeiter = self.tree_selection.get_selected()
+        if treeiter != None:
+            print "You selected", model[treeiter][0]
 
     def get_selected_tree_row(self, *args):
         treeview = self.treeview
@@ -447,6 +449,8 @@ class GUI(object):
         self.slider.set_value(0)
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
         # self.get_next_tree_row(self)
+        print "finished!"
+        # self.toggle_play(self, None, "next")
 
     def on_destroy(self, *args):
         self.playbin.set_state(gst.STATE_NULL)
