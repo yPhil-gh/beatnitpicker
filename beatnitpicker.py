@@ -27,9 +27,6 @@ menu = """
 <ui>
     <menubar name="MenuBar">
         <menu action="File">
-            <menuitem action="New"/>
-            <menuitem action="Open"/>
-            <menuitem action="Save"/>
             <menuitem action="Properties"/>
             <menuitem action="Quit"/>
         </menu>
@@ -148,9 +145,6 @@ class GUI(object):
         self.actiongroup = gtk.ActionGroup("uimanager")
 
         self.actiongroup.add_actions([
-            ("New", gtk.STOCK_NEW, "_New", None, "Create a New Document"),
-            ("Open", gtk.STOCK_OPEN, "_Open", None, "Open an Existing Document"),
-            ("Save", gtk.STOCK_SAVE, "_Save", None, "Save the Current Document"),
             ("Properties", gtk.STOCK_PROPERTIES, "_Properties", None, "File info", self.file_properties_dialog),
             ("Quit", gtk.STOCK_QUIT, "_Quit", None, "Quit the Application", lambda w: gtk.main_quit()),
             ("File", None, "_File"),
@@ -207,6 +201,16 @@ class GUI(object):
 
     def file_properties_dialog(self, widget):
         filename = self.get_selected_tree_row(self)
+
+        def on_info(self, widget):
+            md = gtk.MessageDialog(None,
+                                   gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_INFO,
+                                   gtk.BUTTONS_CLOSE, "Select something")
+            md.run()
+            md.destroy()
+
+        if not filename:
+            on_info(self, widget)
 
         if filename.endswith(tuple(self.audioFormats)):
             title = os.path.basename(filename)
@@ -343,17 +347,6 @@ class GUI(object):
             myint = reduce(lambda rst, d: rst * 10 + d, path)
             selection.unselect_path(myint)
             selection.select_path(myint + 1)
-
-            # filename = os.path.join(self.dirname, model.get_value(iter, 0))
-            # filestat = os.stat(filename)
-
-            # path = tv.get_path(iter)
-            # selected = tv.get_selection()
-            print "Path: ", path, "iter: ", iter, "Int: ", myint
-            # tv.get_selection().select_path(3)
-            # tv.set_cursor(6)
-            # tv.row_activated(path, None)
-
             filename = self.get_next_tree_row(self)
             self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
             self.player(self, filename)
