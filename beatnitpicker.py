@@ -47,77 +47,8 @@ clipath = str(sys.argv[1])
 
 class GUI(object):
 
-
     column_names = ["Name", "Size", "Mode", "Last Changed"]
     audioFormats = [ ".wav", ".mp3", ".ogg", ".flac", ".MP3", ".FLAC", ".OGG", ".WAV", "wma" ]
-
-    def get_info(self, filename, element=None):
-        newitem = gst.pbutils.Discoverer(50000000000)
-        info = newitem.discover_uri("file://" + filename)
-        tags = info.get_tags()
-        tag_string = ""
-        if element:
-            for tag_name in list(tags.keys()):
-                if tag_name == element:
-                    tag_string += " " + str(tags[tag_name]) + '\r\n'
-                return tag_string
-        else:
-            for tag_name in list(tags.keys()):
-                if tag_name != "image":
-                    tag_string += tag_name + " : " + str(tags[tag_name]) + '\r\n'
-            return tag_string
-
-    def file_properties_dialog(self, widget):
-        filename = self.get_selected_tree_row(self)
-
-        if filename.endswith(tuple(self.audioFormats)):
-            title = os.path.basename(filename)
-            text = self.get_info(filename)
-        else:
-            title = os.path.basename(filename)
-            text = "##", filename, "is not an audio file"
-
-        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
-        dialog.set_title("BeatNitPicker audio file info")
-        dialog.format_secondary_text("Location :" + filename + '\r' + str(text))
-        dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
-        dialog.connect('destroy', lambda w: dialog.destroy())
-
-        if filename.endswith(".wav") or filename.endswith(".WAV"):
-            pa = self.plotter(filename, "waveform", "full")
-            pa.set_size_request(350, 200)
-            dialog.vbox.pack_start(pa)
-
-        dialog.show_all()
-        dialog.run()
-        dialog.destroy()
-
-    def about_box(self, widget):
-        about = gtk.AboutDialog()
-        about.set_program_name("BeatNitPicker")
-        about.set_version("0.2")
-        about.set_copyright("(c) Philippe \"xaccrocheur\" Coatmeur")
-        about.set_comments("Simple sound sample auditor")
-        about.set_website("https://github.com/xaccrocheur")
-        about.set_logo(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
-
-        about.set_license(license)
-        about.run()
-        about.destroy()
-
-    def open_file(self, treeview, path, button, *args):
-        model = treeview.get_model()
-        iter = model.get_iter(path)
-        filename = os.path.join(self.dirname, model.get_value(iter, 0))
-        filestat = os.stat(filename)
-
-        if stat.S_ISDIR(filestat.st_mode):
-            new_model = self.make_list(filename)
-            treeview.set_model(new_model)
-        elif filename.endswith(tuple(self.audioFormats)):
-            self.toggle_play(self, filename, "current")
-        else:
-            print("##", filename, "is not an audio file")
 
     def __init__(self, dname = None):
 
@@ -136,7 +67,7 @@ class GUI(object):
         cell_data_funcs = (None, self.file_size, self.file_mode,
                            self.file_last_changed)
 
-        self.listmodel = self.make_list(dname)
+        self.list_store = self.make_list(dname)
         self.treeview = gtk.TreeView()
 
         self.treeview.set_enable_search(True)
@@ -167,7 +98,7 @@ class GUI(object):
                 cell.set_property('xalign', 1.0)
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
             self.treeview.append_column(self.tvcolumn[n])
-        self.treeview.set_model(self.listmodel)
+        self.treeview.set_model(self.list_store)
 
         self.tree_selection = self.treeview.get_selection()
         self.tree_selection.set_mode(gtk.SELECTION_SINGLE)
@@ -235,11 +166,11 @@ class GUI(object):
         menubar = uimanager.get_widget("/MenuBar")
 
         # Connects
-        self.toggle_button.connect("toggled", self.toggle_play, None, "current")
-        self.next_button.connect("clicked", self.toggle_play, None, "next")
+        self.toggle_button.connect("toggled", self.toggle_play, None, "current", self.treeview, self.tree_selection)
+        self.next_button.connect("clicked", self.toggle_play, None, "next", self.treeview, self.tree_selection)
         self.slider.connect('value-changed', self.on_slider_change)
         self.treeview.connect('row-activated', self.open_file)
-        self.treeview.connect("cursor-changed", self.toggle_play, None, "current")
+        # self.treeview.connect("cursor-changed", self.toggle_play, None, "current")
 
         # Packs
         self.mainbox = gtk.VBox()
@@ -257,6 +188,74 @@ class GUI(object):
         self.window.show_all()
         self.treeview.grab_focus()
         return
+
+    def get_info(self, filename, element=None):
+        newitem = gst.pbutils.Discoverer(50000000000)
+        info = newitem.discover_uri("file://" + filename)
+        tags = info.get_tags()
+        tag_string = ""
+        if element:
+            for tag_name in list(tags.keys()):
+                if tag_name == element:
+                    tag_string += " " + str(tags[tag_name]) + '\r\n'
+                return tag_string
+        else:
+            for tag_name in list(tags.keys()):
+                if tag_name != "image":
+                    tag_string += tag_name + " : " + str(tags[tag_name]) + '\r\n'
+            return tag_string
+
+    def file_properties_dialog(self, widget):
+        filename = self.get_selected_tree_row(self)
+
+        if filename.endswith(tuple(self.audioFormats)):
+            title = os.path.basename(filename)
+            text = self.get_info(filename)
+        else:
+            title = os.path.basename(filename)
+            text = "##", filename, "is not an audio file"
+
+        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_NONE, title)
+        dialog.set_title("BeatNitPicker audio file info")
+        dialog.format_secondary_text("Location :" + filename + '\r' + str(text))
+        dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE)
+        dialog.connect('destroy', lambda w: dialog.destroy())
+
+        if filename.endswith(".wav") or filename.endswith(".WAV"):
+            pa = self.plotter(filename, "waveform", "full")
+            pa.set_size_request(350, 200)
+            dialog.vbox.pack_start(pa)
+
+        dialog.show_all()
+        dialog.run()
+        dialog.destroy()
+
+    def about_box(self, widget):
+        about = gtk.AboutDialog()
+        about.set_program_name("BeatNitPicker")
+        about.set_version("0.2")
+        about.set_copyright("(c) Philippe \"xaccrocheur\" Coatmeur")
+        about.set_comments("Simple sound sample auditor")
+        about.set_website("https://github.com/xaccrocheur")
+        about.set_logo(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
+
+        about.set_license(license)
+        about.run()
+        about.destroy()
+
+    def open_file(self, treeview, path, button, *args):
+        model = treeview.get_model()
+        iter = model.get_iter(path)
+        filename = os.path.join(self.dirname, model.get_value(iter, 0))
+        filestat = os.stat(filename)
+
+        if stat.S_ISDIR(filestat.st_mode):
+            new_model = self.make_list(filename)
+            treeview.set_model(new_model)
+        elif filename.endswith(tuple(self.audioFormats)):
+            self.toggle_play(self, filename, "current", None, None)
+        else:
+            print("##", filename, "is not an audio file")
 
     def onSelectionChanged(self, bidule = None) :
         model, treeiter = self.tree_selection.get_selected()
@@ -303,7 +302,8 @@ class GUI(object):
             else:
                 print("##", next_filename, "is not an audio file")
 
-    def toggle_play(self, button, filename, position):
+    def toggle_play(self, button, filename, position, tv, selection):
+
         if position == "current":
             # print "current", self.get_next_tree_row(self)
             pass
@@ -335,6 +335,25 @@ class GUI(object):
             audio_codec_tag = self.get_info(filename, "audio-codec")
             self.label.set_markup("<b> " + os.path.basename(filename) + "</b>\n" + audio_codec_tag)
         else:
+
+            (model, pathlist) = selection.get_selected_rows()
+            for path in pathlist :
+                iter = model.get_iter(path)
+                next_iter = model.iter_next
+            myint = reduce(lambda rst, d: rst * 10 + d, path)
+            selection.unselect_path(myint)
+            selection.select_path(myint + 1)
+
+            # filename = os.path.join(self.dirname, model.get_value(iter, 0))
+            # filestat = os.stat(filename)
+
+            # path = tv.get_path(iter)
+            # selected = tv.get_selection()
+            print "Path: ", path, "iter: ", iter, "Int: ", myint
+            # tv.get_selection().select_path(3)
+            # tv.set_cursor(6)
+            # tv.row_activated(path, None)
+
             filename = self.get_next_tree_row(self)
             self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
             self.player(self, filename)
@@ -396,14 +415,14 @@ class GUI(object):
             self.dirname = os.path.expanduser('~')
         else:
             self.dirname = os.path.abspath(dname)
-        self.window.set_title("BeatNTPK : " + self.dirname)
+        self.window.set_title(self.dirname + " - BNP")
         files = [f for f in os.listdir(self.dirname) if f[0] != '.']
         files.sort()
         files = ['..'] + files
-        listmodel = gtk.ListStore(object)
+        list_store = gtk.ListStore(object)
         for f in files:
-            listmodel.append([f])
-        return listmodel
+            list_store.append([f])
+        return list_store
 
     def file_pixbuf(self, column, cell, model, iter):
         filename = os.path.join(self.dirname, model.get_value(iter, 0))
