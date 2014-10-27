@@ -1,17 +1,16 @@
 #!/usr/bin/python
 
-import os, sys, stat, time, re
+import os, sys, gobject, stat, time, re
+import gtk
 
-print("Python interpreter:")
-print(sys.version)
+import gst, gst.pbutils
 
-from gi.repository import Gtk as gtk
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
+import scipy.io.wavfile as wavfile
 
-from gi.repository import Gst
-
-# from matplotlib.figure import Figure
-# from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
-# import scipy.io.wavfile as wavfile
+import wave
+import numpy as np
 
 license = """
 BeatNitPicker is free software; you can redistribute it and/or modify
@@ -189,6 +188,49 @@ class GUI(object):
         self.treeview.grab_focus()
         return
 
+
+    def _wav2array(nchannels, sampwidth, data):
+        """data must be the string containing the bytes from the wav file."""
+        num_samples, remainder = divmod(len(data), sampwidth * nchannels)
+        if remainder > 0:
+            raise ValueError('The length of data is not a multiple of '
+                             'sampwidth * num_channels.')
+        if sampwidth > 4:
+            raise ValueError("sampwidth must not be greater than 4.")
+
+        if sampwidth == 3:
+            a = np.empty((num_samples, nchannels, 4), dtype=np.uint8)
+            raw_bytes = np.fromstring(data, dtype=np.uint8)
+            a[:, :, :sampwidth] = raw_bytes.reshape(-1, nchannels, sampwidth)
+            a[:, :, sampwidth:] = (a[:, :, sampwidth - 1:sampwidth] >> 7) * 255
+            result = a.view('<i4').reshape(a.shape[:-1])
+        else:
+            # 8 bit samples are stored as unsigned ints; others as signed ints.
+            dt_char = 'u' if sampwidth == 1 else 'i'
+            a = np.fromstring(data, dtype='<%s%d' % (dt_char, sampwidth))
+            result = a.reshape(-1, nchannels)
+            return result
+
+
+    def readwav(file):
+        """
+        Read a wav file.
+
+        Returns the frame rate, sample width (in bytes) and a numpy array
+        containing the data.
+
+        This function does not read compressed wav files.
+        """
+        wav = wave.open(file)
+        rate = wav.getframerate()
+        nchannels = wav.getnchannels()
+        sampwidth = wav.getsampwidth()
+        nframes = wav.getnframes()
+        data = wav.readframes(nframes)
+        wav.close()
+        array = _wav2array(nchannels, sampwidth, data)
+        return rate, sampwidth, array
+
     def get_info(self, filename, element=None):
         newitem = gst.pbutils.Discoverer(50000000000)
         info = newitem.discover_uri("file://" + filename)
@@ -232,7 +274,7 @@ class GUI(object):
         dialog.connect('destroy', lambda w: dialog.destroy())
 
         if filename.endswith(".wav") or filename.endswith(".WAV"):
-            # pa = self.plotter(filename, "waveform", "full")
+            pa = self.plotter(filename, "waveform", "full")
             pa.set_size_request(350, 200)
             dialog.vbox.pack_start(pa)
 
@@ -266,6 +308,11 @@ class GUI(object):
             self.toggle_play(self, filename, "current", None, None)
         else:
             print("##", filename, "is not an audio file")
+
+    def onSelectionChanged(self, bidule = None) :
+        model, treeiter = self.tree_selection.get_selected()
+        if treeiter != None:
+            print "You selected", model[treeiter][0]
 
     def get_selected_tree_row(self, *args):
         treeview = self.treeview
@@ -329,7 +376,7 @@ class GUI(object):
                     if slider_position > 0.0:
                         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
                         self.playbin.set_state(gst.STATE_PLAYING)
-                        # gobject.timeout_add(100, self.update_slider)
+                        gobject.timeout_add(100, self.update_slider)
                         self.is_playing = True
                     else:
                         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
@@ -352,6 +399,21 @@ class GUI(object):
             self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
             self.player(self, filename)
 
+    def pcm24to32(data, nchannels=1):
+        temp = np.zeros((len(data) / 3, 4), dtype='b')
+        temp[:, 1:] = np.frombuffer(data, dtype='b').reshape(-1, 3)
+        return temp.view('<i4').reshape(-1, nchannels)
+
+    def pcm2float(sig, dtype=np.float64):
+        sig = np.asarray(sig)  # make sure it's a NumPy array
+        assert sig.dtype.kind == 'i', "'sig' must be an array of signed integers!"
+        dtype = np.dtype(dtype)  # allow string input (e.g. 'f')
+
+        # Note that 'min' has a greater (by 1) absolute value than 'max'!
+        # Therefore, we use 'min' here to avoid clipping.
+        return sig.astype(dtype) / dtype.type(-np.iinfo(sig.dtype).min)
+
+
     def player(self, button, filename):
         self.plot_outbox.remove(self.plot_inbox)
 
@@ -359,18 +421,44 @@ class GUI(object):
         self.playbin.set_property('uri', 'file:///' + filename)
         self.is_playing = True
         self.playbin.set_state(gst.STATE_PLAYING)
-        # gobject.timeout_add(100, self.update_slider)
+        gobject.timeout_add(100, self.update_slider)
 
         self.vp = gtk.Viewport()
         self.plot_inbox = gtk.HBox()
 
-        self.lab = gtk.Label("No viz")
-        self.plot_inbox.pack_start(self.lab, True, True, 0)
+        self.mylabel = gtk.Label("No Viz")
 
-        if filename.endswith(".wav") or filename.endswith(".WAV"):
-            self.plot_inbox.remove(self.lab)
+        readable = False
+
+
+        try:
+            f = open(filename, 'r')
+            w = wavfile.read(open(filename, 'r'))
+            readable = True
+        except IOError as e:
+            print "I/O error({0}): {1}".format(e.errno, e.strerror)
+            readable = False
+        except ValueError:
+            print "Error opening file."
+            readable = False
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            readable = False
+            raise
+
+        # if wavfile.read(open(filename, 'r')):
+        #     readable = True
+        #     print("OK Kool")
+        # else:
+        #     print("NOT Kool")
+
+        if readable:
+            print("OK YOOOW")
             self.pa = self.plotter(filename, "waveform", "neat")
             self.plot_inbox.pack_start(self.pa)
+        else:
+            print("NOYO")
+            self.plot_inbox.pack_start(self.mylabel)
 
         # self.plot_inbox.set_size_request(200, 60)
         self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
@@ -378,20 +466,8 @@ class GUI(object):
         self.window.show_all()
 
     def plotter(self, filename, plot_type, plot_style):
-        rate, data = wavfile.read(open(filename, 'r'))
-
-        # if wavfile.read(open(filename, 'r')):
-        #     print "Rate OK"
-        # else:
-        #     print "Rate NOT OK"
-
-        try:
-            fs, sig = wavfile.read(filename)
-        except:
-            print("Rate NOT OK")
-        else:
-            print("Surprisingly, it seems to work!")
-
+        rate, data = wavfile.read(open(filename, 'r'), True)
+        print("Rate: ", rate)
 
         f = Figure(facecolor = 'w')
         f.patch.set_alpha(1)
@@ -407,6 +483,8 @@ class GUI(object):
             f.subplots_adjust(0, 0, 1, 1)
             a.axis('off')
         canvas = FigureCanvas(f)  # a gtk.DrawingArea
+
+
         return canvas
 
     # Lister funcs
@@ -480,7 +558,7 @@ class GUI(object):
         self.slider.set_value(0)
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
         # self.get_next_tree_row(self)
-        print("finished!")
+        print "finished!"
         # self.toggle_play(self, None, "next")
 
     def on_destroy(self, *args):
