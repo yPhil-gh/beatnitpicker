@@ -106,20 +106,10 @@ class GUI(object):
         about.destroy()
 
     def open_file(self, treeview, path, button, *args):
-
-        # if clipath:
-        #     filename = os.path.join(clipath)
-        #     # dirpath = clipath
-        # else:
-        #     filename = os.path.join(self.dirname, model.get_value(iter, 0))
-        #     # dirpath = self.dirname
-
         model = treeview.get_model()
         iter = model.get_iter(path)
         filename = os.path.join(self.dirname, model.get_value(iter, 0))
         filestat = os.stat(filename)
-
-        print "path: ", path
 
         if stat.S_ISDIR(filestat.st_mode):
             new_model = self.make_list(filename)
@@ -140,7 +130,6 @@ class GUI(object):
         self.window.set_size_request(300, 600)
         self.window.connect("delete_event", self.on_destroy)
         self.window.set_icon(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
-
         self.mydname = dname
 
     # lister
@@ -177,6 +166,10 @@ class GUI(object):
             self.treeview.append_column(self.tvcolumn[n])
         self.treeview.set_model(self.listmodel)
 
+        self.tree_selection = self.treeview.get_selection()
+        self.tree_selection.set_mode(gtk.SELECTION_MULTIPLE)
+        self.tree_selection.connect("changed", self.onSelectionChanged)
+
     # player
         self.label = gtk.Label()
         self.label.set_alignment(0,0.5)
@@ -196,10 +189,8 @@ class GUI(object):
         self.slider.set_increments(1, 10)
 
         self.buttons_hbox.pack_start(self.toggle_button, False)
-        self.buttons_hbox.pack_start(self.label, False)
-
         self.buttons_hbox.pack_start(self.next_button, False)
-
+        self.buttons_hbox.pack_start(self.label, False)
         self.slider_hbox.pack_start(self.slider, True, True)
 
         self.playbin = gst.element_factory_make('playbin2')
@@ -240,7 +231,6 @@ class GUI(object):
 
         menubar = uimanager.get_widget("/MenuBar")
 
-
         # Connects
         self.toggle_button.connect("toggled", self.toggle_play, None, "current")
         self.next_button.connect("clicked", self.toggle_play, None, "next")
@@ -264,6 +254,12 @@ class GUI(object):
         self.treeview.grab_focus()
         return
 
+    def onSelectionChanged(self, bidule = None) :
+        (model, pathlist) = self.tree_selection.get_selected_rows()
+        for path in pathlist :
+            tree_iter = model.get_iter(path)
+            value = model.get_value(tree_iter,0)
+            print value
 
     def get_selected_tree_row(self, *args):
         treeview = self.treeview
