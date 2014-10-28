@@ -50,8 +50,6 @@ else:
 def bytestomegabytes(bytes):
     return (bytes / 1024) / 1024
 
-def kilobytestomegabytes(kilobytes):
-    return kilobytes / 1024
 
 def k_to_m(num):
     for x in ['bytes','KB','MB','GB']:
@@ -59,6 +57,49 @@ def k_to_m(num):
             return "%3.1f%s" % (num, x)
         num /= 1024.0
     return "%3.1f%s" % (num, 'TB')
+
+
+def _wav2array(nchannels, sampwidth, data):
+    """data must be the string containing the bytes from the wav file."""
+    num_samples, remainder = divmod(len(data), sampwidth * nchannels)
+    if remainder > 0:
+        raise ValueError('The length of data is not a multiple of '
+                         'sampwidth * num_channels.')
+        if sampwidth > 4:
+            raise ValueError("sampwidth must not be greater than 4.")
+
+    if sampwidth == 3:
+        a = np.empty((num_samples, nchannels, 4), dtype=np.uint8)
+        raw_bytes = np.fromstring(data, dtype=np.uint8)
+        a[:, :, :sampwidth] = raw_bytes.reshape(-1, nchannels, sampwidth)
+        a[:, :, sampwidth:] = (a[:, :, sampwidth - 1:sampwidth] >> 7) * 255
+        result = a.view('<i4').reshape(a.shape[:-1])
+    else:
+        # 8 bit samples are stored as unsigned ints; others as signed ints.
+        dt_char = 'u' if sampwidth == 1 else 'i'
+        a = np.fromstring(data, dtype='<%s%d' % (dt_char, sampwidth))
+        result = a.reshape(-1, nchannels)
+        return result
+
+
+def readwav(file):
+    """
+    Read a wav file.
+
+    Returns the frame rate, sample width (in bytes) and a numpy array
+    containing the data.
+
+    This function does not read compressed wav files.
+    """
+    wav = wave.open(file)
+    rate = wav.getframerate()
+    nchannels = wav.getnchannels()
+    sampwidth = wav.getsampwidth()
+    nframes = wav.getnframes()
+    data = wav.readframes(nframes)
+    wav.close()
+    array = _wav2array(nchannels, sampwidth, data)
+    return rate, sampwidth, array
 
 class GUI(object):
 
@@ -228,26 +269,6 @@ class GUI(object):
             result = a.reshape(-1, nchannels)
             return result
 
-
-    def readwav(file):
-        """
-        Read a wav file.
-
-        Returns the frame rate, sample width (in bytes) and a numpy array
-        containing the data.
-
-        This function does not read compressed wav files.
-        """
-        wav = wave.open(file)
-        rate = wav.getframerate()
-        nchannels = wav.getnchannels()
-        sampwidth = wav.getsampwidth()
-        nframes = wav.getnframes()
-        data = wav.readframes(nframes)
-        wav.close()
-        array = _wav2array(nchannels, sampwidth, data)
-        return rate, sampwidth, array
-
     def get_info(self, filename, element=None):
         newitem = gst.pbutils.Discoverer(50000000000)
         info = newitem.discover_uri("file://" + filename)
@@ -346,6 +367,8 @@ class GUI(object):
         treeview = self.treeview
         selection = treeview.get_selection()
         (model, pathlist) = selection.get_selected_rows()
+        # print "Model: ", model, "Pathlist: ", pathlist, "Longueur: ", pathlist.count()
+
         slider_position =  self.slider.get_value()
         for path in pathlist :
             iter = model.get_iter(path)
@@ -359,7 +382,8 @@ class GUI(object):
                 # next_filename = self.get_next_tree_row(self)
                 # print "current", current
                 # print "next", next_filename
-                pass
+                selection.select_iter(next_iter)
+                # pass
                 # if next_filename != current:
             elif next_filename.endswith(tuple(self.audioFormats)):
                 return next_filename
@@ -419,21 +443,6 @@ class GUI(object):
                 print "NO Filename"
                 pass
 
-    def pcm24to32(data, nchannels=1):
-        temp = np.zeros((len(data) / 3, 4), dtype='b')
-        temp[:, 1:] = np.frombuffer(data, dtype='b').reshape(-1, 3)
-        return temp.view('<i4').reshape(-1, nchannels)
-
-    def pcm2float(sig, dtype=np.float64):
-        sig = np.asarray(sig)  # make sure it's a NumPy array
-        assert sig.dtype.kind == 'i', "'sig' must be an array of signed integers!"
-        dtype = np.dtype(dtype)  # allow string input (e.g. 'f')
-
-        # Note that 'min' has a greater (by 1) absolute value than 'max'!
-        # Therefore, we use 'min' here to avoid clipping.
-        return sig.astype(dtype) / dtype.type(-np.iinfo(sig.dtype).min)
-
-
     def player(self, button, filename):
         self.plot_outbox.remove(self.plot_inbox)
 
@@ -476,6 +485,7 @@ class GUI(object):
 
     def plotter(self, filename, plot_type, plot_style):
         rate, data = wavfile.read(open(filename, 'r'), True)
+        # rate, data, array = readwav(filename)
         # print("Rate: ", rate)
 
         f = Figure(facecolor = 'w')
