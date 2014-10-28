@@ -47,6 +47,19 @@ if len(sys.argv) > 1:
 else:
     clipath = False
 
+def bytestomegabytes(bytes):
+    return (bytes / 1024) / 1024
+
+def kilobytestomegabytes(kilobytes):
+    return kilobytes / 1024
+
+def k_to_m(num):
+    for x in ['bytes','KB','MB','GB']:
+        if num < 1024.0:
+            return "%3.1f%s" % (num, x)
+        num /= 1024.0
+    return "%3.1f%s" % (num, 'TB')
+
 class GUI(object):
 
     column_names = ["Name", "Size", "Mode", "Last Changed"]
@@ -60,7 +73,7 @@ class GUI(object):
             dname = None
 
         self.window = gtk.Window()
-        self.window.set_size_request(300, 600)
+        self.window.set_size_request(550, 600)
         self.window.connect("delete_event", self.on_destroy)
         self.window.set_icon(gtk.icon_theme_get_default().load_icon("gstreamer-properties", 128, 0))
 
@@ -85,6 +98,7 @@ class GUI(object):
         self.tvcolumn[0].pack_start(cell, False)
         self.tvcolumn[0].set_cell_data_func(cell, self.file_name)
         self.treeview.append_column(self.tvcolumn[0])
+
         for n in range(1, len(self.column_names)):
             cell = gtk.CellRendererText()
             self.tvcolumn[n] = gtk.TreeViewColumn(self.column_names[n], cell)
@@ -98,6 +112,7 @@ class GUI(object):
 
             if n == 1:
                 cell.set_property('xalign', 1.0)
+
             self.tvcolumn[n].set_cell_data_func(cell, cell_data_funcs[n])
             self.treeview.append_column(self.tvcolumn[n])
         self.treeview.set_model(self.list_store)
@@ -110,6 +125,7 @@ class GUI(object):
         self.label = gtk.Label()
         self.label.set_alignment(0,0.5)
         self.label.set_markup("<b> </b>\n \n ")
+        self.label.set_line_wrap(True)
 
         self.slider = gtk.HScale()
         self.toggle_button = gtk.ToggleButton(None)
@@ -176,6 +192,7 @@ class GUI(object):
         self.plot_inbox = gtk.HBox(True, 0)
         self.plot_outbox = gtk.VBox(True, 0)
         self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
+        self.plot_outbox.set_size_request(200, 60)
 
         self.mainbox.pack_start(menubar, False)
         self.mainbox.pack_start(self.plot_outbox, False, False, 1)
@@ -309,11 +326,6 @@ class GUI(object):
         else:
             print("##", filename, "is not an audio file")
 
-    def onSelectionChanged(self, bidule = None) :
-        model, treeiter = self.tree_selection.get_selected()
-        if treeiter != None:
-            print "You selected", model[treeiter][0]
-
     def get_selected_tree_row(self, *args):
         treeview = self.treeview
         selection = treeview.get_selection()
@@ -351,6 +363,7 @@ class GUI(object):
                 # if next_filename != current:
             elif next_filename.endswith(tuple(self.audioFormats)):
                 return next_filename
+                selection.select_iter(next_iter)
             else:
                 print("##", next_filename, "is not an audio file")
 
@@ -389,15 +402,22 @@ class GUI(object):
         else:
 
             (model, pathlist) = selection.get_selected_rows()
+
             for path in pathlist :
                 iter = model.get_iter(path)
                 next_iter = model.iter_next
-            myint = reduce(lambda rst, d: rst * 10 + d, path)
-            selection.unselect_path(myint)
-            selection.select_path(myint + 1)
             filename = self.get_next_tree_row(self)
-            self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
-            self.player(self, filename)
+            if filename:
+                myint = reduce(lambda rst, d: rst * 10 + d, path)
+                selection.unselect_path(myint)
+                selection.select_path(myint + 1)
+                print "Filename: ", filename
+                self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE,  gtk.ICON_SIZE_BUTTON))
+                self.player(self, filename)
+                self.is_playing = True
+            else:
+                print "NO Filename"
+                pass
 
     def pcm24to32(data, nchannels=1):
         temp = np.zeros((len(data) / 3, 4), dtype='b')
@@ -430,7 +450,6 @@ class GUI(object):
 
         readable = False
 
-
         try:
             f = open(filename, 'r')
             w = wavfile.read(open(filename, 'r'))
@@ -439,7 +458,7 @@ class GUI(object):
             print "I/O error({0}): {1}".format(e.errno, e.strerror)
             readable = False
         except ValueError:
-            print "Error opening file."
+            print "Error opening file for plotting: Will not draw waveform."
             readable = False
         except:
             print "Unexpected error:", sys.exc_info()[0]
@@ -453,12 +472,11 @@ class GUI(object):
             self.plot_inbox.pack_start(self.mylabel)
 
         self.plot_outbox.pack_start(self.plot_inbox, True, True, 0)
-        self.plot_outbox.set_size_request(200, 60)
         self.window.show_all()
 
     def plotter(self, filename, plot_type, plot_style):
         rate, data = wavfile.read(open(filename, 'r'), True)
-        print("Rate: ", rate)
+        # print("Rate: ", rate)
 
         f = Figure(facecolor = 'w')
         f.patch.set_alpha(1)
@@ -521,7 +539,10 @@ class GUI(object):
     def file_size(self, column, cell, model, iter):
         filename = os.path.join(self.dirname, model.get_value(iter, 0))
         filestat = os.stat(filename)
-        cell.set_property('text', filestat.st_size)
+        # print("Size: ", bytestomegabytes(filestat.st_size), "Mb")
+
+        size = str(k_to_m(filestat.st_size))
+        cell.set_property('text', size)
         return
 
     def file_mode(self, column, cell, model, iter):
@@ -545,9 +566,6 @@ class GUI(object):
         self.playbin.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, 0)
         self.slider.set_value(0)
         self.toggle_button.set_property("image", gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY,  gtk.ICON_SIZE_BUTTON))
-        # self.get_next_tree_row(self)
-        print "finished!"
-        # self.toggle_play(self, None, "next")
 
     def on_destroy(self, *args):
         self.playbin.set_state(gst.STATE_NULL)
